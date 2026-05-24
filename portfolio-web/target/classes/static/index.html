@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechForge · 技术熔炉</title>
+    <style>
+        /* ========== 配色系统 ========== */
+        :root {
+            --bg-primary: #f0f7ff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --accent: #06b6d4;
+            --accent-dark: #0891b2;
+            --border: #e5e5e5;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        a { text-decoration: none; color: inherit; cursor: pointer; }
+
+        /* ========== 导航 ========== */
+        .navbar {
+            position: sticky;
+            top: 0;
+            height: 60px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            z-index: 100;
+            overflow-x: auto;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            flex-shrink: 0;
+        }
+
+        .nav-brand span { color: var(--accent); }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            flex-wrap: nowrap;
+        }
+
+        .nav-link {
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover { color: var(--accent); }
+
+        /* ========== 主容器 ========== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* ========== Hero 卡片区 ========== */
+        .hero-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            box-shadow: 0 4px 24px var(--shadow);
+            margin-bottom: 48px;
+        }
+
+        .hero-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 600;
+            color: #fff;
+            margin: 0 auto 24px;
+        }
+
+        .hero-name {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .hero-role {
+            font-size: 16px;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .hero-bio {
+            font-size: 15px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+
+        .hero-links {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .link-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .link-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .link-btn:focus {
+            outline: none;
+        }
+
+        .link-btn.primary {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+        }
+
+        /* ========== 通用卡片网格 ========== */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px var(--shadow);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .section-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            background: var(--bg-primary);
+            color: var(--text-muted);
+        }
+
+        /* ========== 章节标题 ========== */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .section-more {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .section-more:hover { color: var(--accent); }
+
+        /* ========== 文章卡片 ========== */
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ========== 项目卡片 ========== */
+        .project-link {
+            font-size: 13px;
+            color: var(--accent);
+            margin-right: 16px;
+        }
+
+        .project-link:hover { text-decoration: underline; }
+
+        /* ========== 技能标签 ========== */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .skill-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            font-size: 14px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .skill-card:hover {
+            background: var(--accent);
+            color: #fff;
+            transform: scale(1.03);
+        }
+
+        /* ========== AI 对话区域 ========== */
+        .ai-chat-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px var(--shadow);
+            margin-bottom: 48px;
+        }
+
+        .ai-chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .ai-chat-display {
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .ai-input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .ai-input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .ai-input:focus { border-color: var(--accent); }
+
+        .ai-send-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .ai-send-btn:hover { background: var(--accent-dark); }
+
+        /* ========== 页脚 ========== */
+        .footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* ========== 登录页 ========== */
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 60px);
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 24px var(--shadow);
+        }
+
+        .login-title {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus { border-color: var(--accent); }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .login-btn:hover { background: var(--accent-dark); }
+
+        /* ========== 后台管理页 ========== */
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: calc(100vh - 60px);
+        }
+
+        .admin-sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+        }
+
+        .admin-menu { list-style: none; }
+
+        .admin-menu-item {
+            padding: 14px 24px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-menu-item:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .admin-menu-item.active {
+            background: var(--bg-primary);
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+        }
+
+        .admin-content { padding: 32px; }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+
+        .admin-title { font-size: 22px; font-weight: 600; }
+
+        .admin-action-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 16px;
+                gap: 8px;
+            }
+            .nav-links {
+                gap: 12px;
+            }
+            .nav-link {
+                font-size: 13px;
+            }
+            .hero-card {
+                padding: 24px 16px;
+            }
+            .hero-name {
+                font-size: 24px;
+            }
+            .hero-bio {
+                font-size: 14px;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            .admin-layout {
+                grid-template-columns: 1fr;
+            }
+            .admin-sidebar {
+                display: none;
+            }
+            .ai-input-row {
+                flex-direction: column;
+            }
+            .ai-send-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 0 12px;
+            }
+            .nav-brand {
+                font-size: 16px;
+            }
+            .nav-links {
+                gap: 8px;
+            }
+            .nav-link {
+                font-size: 12px;
+            }
+            .skills-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/" class="nav-brand">Tech<span>Forge</span></a>
+        <div class="nav-links">
+            <a class="nav-link" href="/articles.html">文章</a>
+            <a class="nav-link" href="#projects">项目</a>
+            <a class="nav-link" href="#skills">技能</a>
+            <a class="nav-link" href="#chat">AI 对话</a>
+            <a class="nav-link" href="#admin">后台</a>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <main class="container">
+        <!-- Hero 大卡片 -->
+        <section class="hero-card" id="home">
+            <div class="hero-avatar">辉</div>
+            <h1 class="hero-name">小辉</h1>
+            <p class="hero-role">RISC-V 物联网 · AI 开发者</p>
+            <p class="hero-bio">
+                专注于边缘AI与工业智能应用开发。<br>
+                参与 RISC-V 物联网竞赛方案设计与实现，拥有多个从 0 到 1 的项目经验。
+            </p>
+            <div class="hero-links">
+                <a href="#articles" class="link-btn">了解更多 →</a>
+                <a href="#projects" class="link-btn">GitHub</a>
+                <a href="#chat" class="link-btn">联系</a>
+            </div>
+        </section>
+
+        <!-- 文章网格 -->
+        <section class="section" id="articles">
+            <div class="section-header">
+                <h2 class="section-title">最新文章</h2>
+                <a href="/articles.html" class="section-more" id="articlesMore" style="display:none;">查看全部 →</a>
+            </div>
+            <div class="card-grid" id="articlesGrid">
+                <article class="section-card">
+                    <h3 class="card-title">基于RISC-V开发板的边缘AI部署实战</h3>
+                    <p class="card-desc">从零开始教你在全志D1s上运行TensorFlow Lite模型...</p>
+                    <div class="card-tags">
+                        <span class="tag">RISC-V</span>
+                    </div>
+                </article>
+                <article class="section-card">
+                    <h3 class="card-title">因果推断在工业异常检测中的应用</h3>
+                    <p class="card-desc">探讨如何利用格兰杰因果检验识别多传感器异常...</p>
+                    <div class="card-tags">
+                        <span class="tag">工业AI</span>
+                    </div>
+                </article>
+                <article class="section-card">
+                    <h3 class="card-title">竞赛方案写作心路</h3>
+                    <p class="card-desc">从选题到获奖，一个RISC-V物联网竞赛的完整复盘...</p>
+                    <div class="card-tags">
+                        <span class="tag">经验</span>
+                    </div>
+                </article>
+                <article class="section-card">
+                    <h3 class="card-title">TensorFlow Lite 模型优化指南</h3>
+                    <p class="card-desc">如何在资源受限的开发板上高效部署AI模型...</p>
+                    <div class="card-tags">
+                        <span class="tag">深度学习</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 项目网格 -->
+        <section class="section" id="projects">
+            <div class="section-header">
+                <h2 class="section-title">项目展示</h2>
+            </div>
+            <div class="card-grid">
+                <article class="section-card">
+                    <h3 class="card-title">工业设备异常溯源系统</h3>
+                    <p class="card-desc">基于RISC-V开发板的多传感器实时监控系统，实现异常检测与因果推断溯源。</p>
+                    <div class="card-tags">
+                        <span class="tag">RISC-V</span>
+                        <span class="tag">TensorFlow</span>
+                        <span class="tag">Flask</span>
+                    </div>
+                </article>
+                <article class="section-card">
+                    <h3 class="card-title">英语单词学习APP</h3>
+                    <p class="card-desc">Android背单词应用，基于艾宾浩斯遗忘曲线算法。</p>
+                    <div class="card-tags">
+                        <span class="tag">Kotlin</span>
+                        <span class="tag">Compose</span>
+                    </div>
+                </article>
+                <article class="section-card">
+                    <h3 class="card-title">TechForge 个人网站</h3>
+                    <p class="card-desc">个人作品集网站，前后端分离设计。</p>
+                    <div class="card-tags">
+                        <span class="tag">Spring Boot</span>
+                        <span class="tag">MySQL</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 技能网格 -->
+        <section class="section" id="skills">
+            <div class="section-header">
+                <h2 class="section-title">技术栈</h2>
+            </div>
+            <div class="skills-grid">
+                <div class="skill-card">RISC-V 开发</div>
+                <div class="skill-card">C / Python</div>
+                <div class="skill-card">TensorFlow Lite</div>
+                <div class="skill-card">边缘计算</div>
+                <div class="skill-card">IoT 物联网</div>
+                <div class="skill-card">Flask / FastAPI</div>
+                <div class="skill-card">Kotlin / Android</div>
+                <div class="skill-card">Docker</div>
+                <div class="skill-card">MySQL</div>
+                <div class="skill-card">AI / 大模型</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- AI 对话区域 -->
+    <main class="container">
+        <section class="ai-chat-section" id="chat">
+            <h2 class="ai-chat-title">AI 智能对话</h2>
+            <div class="ai-chat-display">
+                <p>你好！我是 TechForge AI 助手，有什么我可以帮助你的吗？</p>
+            </div>
+            <div class="ai-input-row">
+                <input type="text" class="ai-input" placeholder="请输入您的问题...">
+                <button class="ai-send-btn">发送</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="container">
+        <div class="footer">
+            <p>© 2026 TechForge · 用技术创造价值</p>
+        </div>
+    </footer>
+
+    <!-- 后台登录页 -->
+    <main class="container" id="admin">
+        <section class="login-page">
+            <div class="login-box">
+                <h2 class="login-title">管理后台登录</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">用户名</label>
+                        <input type="text" id="username" class="form-input" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" id="password" class="form-input" placeholder="请输入密码" required>
+                    </div>
+                    <div class="form-group" id="loginError" style="display:none;color:#dc2626;font-size:14px;margin-bottom:12px;"></div>
+                    <button type="submit" class="login-btn">登录</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script>
+    // 加载文章列表
+    async function loadArticles() {
+        try {
+            const res = await fetch('/api/articles?page=1&size=6');
+            const data = await res.json();
+            if (data.code === 0 && data.data && data.data.list) {
+                const articles = data.data.list;
+                const grid = document.getElementById('articlesGrid');
+                const moreBtn = document.getElementById('articlesMore');
+
+                // 清空现有静态内容
+                grid.innerHTML = '';
+
+                // 生成文章卡片
+                articles.forEach(article => {
+                    const card = document.createElement('article');
+                    card.className = 'section-card';
+                    card.style.cursor = 'pointer';
+                    card.onclick = () => window.location.href = `/article.html?id=${article.id}`;
+                    card.innerHTML = `
+                        <h3 class="card-title">${article.title}</h3>
+                        <p class="card-desc">${article.excerpt || ''}</p>
+                        <div class="card-tags">
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // 如果文章数 >= 6，显示"查看更多"按钮
+                if (data.data.total >= 6) {
+                    moreBtn.style.display = 'block';
+                }
+            }
+        } catch (err) {
+            console.error('加载文章失败:', err);
+        }
+    }
+
+    // 页面加载完成后加载文章
+    document.addEventListener('DOMContentLoaded', loadArticles);
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+            const data = await res.json();
+            if (data.code === 0) {
+                localStorage.setItem('token', data.data.token);
+                window.location.href = '/admin.html';
+            } else {
+                errorDiv.textContent = data.message || '登录失败';
+                errorDiv.style.display = 'block';
+            }
+        } catch (err) {
+            errorDiv.textContent = '网络错误';
+            errorDiv.style.display = 'block';
+        }
+    });
+    </script>
+</body>
+</html>
