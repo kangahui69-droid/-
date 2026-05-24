@@ -415,7 +415,10 @@
     <div id="adminView" class="admin-layout hidden">
         <!-- 侧边栏 -->
         <aside class="admin-sidebar">
-            <div class="admin-logo"><a href="/">Tech<span>Forge</span> 管理</a></div>
+            <div class="admin-menu" style="margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <a href="/" class="admin-menu-item" style="display:block;text-decoration:none;">← 首页</a>
+            </div>
+            <div class="admin-logo"><a href="/admin.html">Tech<span>Forge</span> 管理</a></div>
             <ul class="admin-menu">
                 <li class="admin-menu-item active" data-page="articles">文章管理</li>
                 <li class="admin-menu-item" data-page="comments">评论管理</li>
@@ -571,7 +574,9 @@
         // 编辑文章
         async function editArticle(id) {
             try {
-                const res = await fetch(API_BASE + '/articles/' + id);
+                const res = await fetch('/api/articles/' + id, {
+                    headers: getHeaders()
+                });
                 const data = await res.json();
                 if (data.code === 0 && data.data) {
                     editingArticleId = id;
@@ -691,7 +696,9 @@
 
             // 先加载文章列表供选择
             try {
-                const res = await fetch(API_BASE + '/articles');
+                const res = await fetch(API_BASE + '/articles', {
+                    headers: getHeaders()
+                });
                 const data = await res.json();
                 if (data.code === 0 && data.data) {
                     const articles = data.data.list || [];

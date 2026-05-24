@@ -292,11 +292,12 @@
     <nav class="navbar">
         <a href="/" class="nav-brand">Tech<span>Forge</span></a>
         <div class="nav-links">
+            <a class="nav-link" href="/">首页</a>
             <a class="nav-link" href="/articles.html">文章</a>
             <a class="nav-link" href="/#projects">项目</a>
             <a class="nav-link" href="/#skills">技能</a>
             <a class="nav-link" href="/#chat">AI 对话</a>
-            <a class="nav-link" href="/#admin">后台</a>
+            <a class="nav-link" href="/admin.html">后台</a>
         </div>
     </nav>
 
@@ -348,7 +349,7 @@
                 const res = await fetch(`/api/articles/${articleId}`);
                 const data = await res.json();
 
-                if (data.code === 200 && data.data) {
+                if (data.code === 0 && data.data) {
                     const article = data.data;
                     renderArticle(article);
                 } else {
@@ -417,7 +418,7 @@
                 });
 
                 const data = await res.json();
-                if (data.code === 200) {
+                if (data.code === 0) {
                     document.getElementById('commentText').value = '';
                     alert('评论成功！');
                     loadComments(); // 刷新评论列表
@@ -441,7 +442,7 @@
                 const res = await fetch(`/api/comments?articleId=${articleId}`);
                 const data = await res.json();
 
-                if (data.code === 200 && data.data) {
+                if (data.code === 0 && data.data) {
                     const comments = data.data.list || [];
                     const total = data.data.total || 0;
 

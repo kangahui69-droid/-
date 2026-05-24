@@ -215,11 +215,12 @@
     <nav class="navbar">
         <a href="/" class="nav-brand">Tech<span>Forge</span></a>
         <div class="nav-links">
+            <a class="nav-link" href="/">首页</a>
             <a class="nav-link active" href="/articles.html">文章</a>
             <a class="nav-link" href="/#projects">项目</a>
             <a class="nav-link" href="/#skills">技能</a>
             <a class="nav-link" href="/#chat">AI 对话</a>
-            <a class="nav-link" href="/#admin">后台</a>
+            <a class="nav-link" href="/admin.html">后台</a>
         </div>
     </nav>
 
@@ -259,7 +260,7 @@
                 const res = await fetch(`/api/articles?page=${page}&size=${PAGE_SIZE}`);
                 const data = await res.json();
 
-                if (data.code === 200 && data.data) {
+                if (data.code === 0 && data.data) {
                     const articles = data.data.list || [];
                     const total = data.data.total || 0;
                     const totalPages = Math.ceil(total / PAGE_SIZE);
