@@ -2,6 +2,7 @@ package com.techforge.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 项目展示
@@ -106,6 +107,12 @@ public class Project {
 
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    // 关联技能（不映射，由 Service 层自行处理）
+    private transient java.util.List<Skill> skills;
+
+    public java.util.List<Skill> getSkills() { return skills; }
+    public void setSkills(java.util.List<Skill> skills) { this.skills = skills; }
 
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }

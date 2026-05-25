@@ -114,6 +114,30 @@
             color: var(--text-secondary);
         }
 
+        .skill-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            background: var(--accent);
+            color: #1a1a2e;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* 技能管理样式 */
+        .skill-category { margin-bottom: 24px; }
+        .skill-category .category-title { font-size: 16px; margin-bottom: 12px; color: var(--text-primary); }
+        .skill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .skill-card { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-secondary); border-radius: 8px; }
+        .skill-info { flex: 1; }
+        .skill-name { font-weight: 500; }
+        .skill-meta { margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
+        .skill-level { padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .skill-level.level-1, .skill-level.level-2 { background: #4fc3f7; color: #1a1a2e; }
+        .skill-level.level-3 { background: #ffb74d; color: #1a1a2e; }
+        .skill-level.level-4, .skill-level.level-5 { background: #ef5350; color: #fff; }
+        .skill-btns { display: flex; gap: 8px; }
+
         .btn-secondary:hover {
             border-color: var(--text-primary);
             color: var(--text-primary);
@@ -494,6 +518,9 @@
                 case 'projects':
                     loadProjects();
                     break;
+                case 'skills':
+                    loadSkills();
+                    break;
                 default:
                     showPlaceholder(page);
             }
@@ -868,11 +895,28 @@
         // ===== 项目管理 =====
 
         let editingProjectId = null;
+        let allSkills = [];
+
+        // 加载技能列表
+        async function loadAllSkillsForProject() {
+            try {
+                const res = await fetch('/api/skills');
+                const data = await res.json();
+                if (data.code === 0) {
+                    allSkills = data.data || [];
+                }
+            } catch (err) {
+                console.error('load skills error:', err);
+            }
+        }
 
         // 加载项目列表
         async function loadProjects() {
             const content = document.getElementById('contentArea');
             content.innerHTML = '<div class="loading">加载项目...</div>';
+
+            // 先加载技能列表
+            await loadAllSkillsForProject();
 
             try {
                 const res = await fetch('/api/projects');
@@ -943,6 +987,15 @@
     <input type="text" id="projectTech" class="form-input" value="${techVal}" placeholder="用逗号分隔">
 </div>
 <div class="form-group">
+    <label class="form-label">关联技能</label>
+    <div id="skillSelector" class="skill-selector">
+        <div class="skill-options" style="max-height:150px;overflow-y:auto;border:1px solid #ddd;padding:8px;border-radius:4px;">
+            ${allSkills.map(s => `<label style="display:inline-block;margin:4px;cursor:pointer;"><input type="checkbox" class="skill-checkbox" value="${s.id}" ${project && project.skills && project.skills.some(ps => ps.id === s.id) ? 'checked' : ''}> ${escapeHtml(s.name)}</label>`).join('')}
+        </div>
+        <div id="selectedSkills" class="selected-skills" style="margin-top:8px;"></div>
+    </div>
+</div>
+<div class="form-group">
     <label class="form-label">项目类型</label>
     <input type="text" id="projectType" class="form-input" value="${typeVal}" placeholder="如：Web应用">
 </div>
@@ -986,6 +1039,11 @@
     <button class="btn btn-secondary" style="margin-left:8px;" onclick="loadProjects()">取消</button>
 </div>`;
             content.innerHTML = html;
+
+            // 绑定技能复选框事件
+            document.querySelectorAll('.skill-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateSelectedSkillTags);
+            });
         }
 
         // 编辑项目
@@ -1002,6 +1060,16 @@
             } catch (err) {
                 showError('网络错误');
             }
+        }
+
+        // 更新已选技能标签显示
+        function updateSelectedSkillTags() {
+            const checked = Array.from(document.querySelectorAll('.skill-checkbox:checked'));
+            const container = document.getElementById('selectedSkills');
+            container.innerHTML = checked.map(cb => {
+                const skill = allSkills.find(s => s.id == cb.value);
+                return skill ? `<span class="skill-tag">${escapeHtml(skill.name)} <span style="cursor:pointer;margin-left:4px;" onclick="this.parentElement.querySelector('input').click()">&times;</span></span>` : '';
+            }).join('');
         }
 
         // 保存项目
@@ -1039,6 +1107,13 @@
             projectData.sortOrder = parseInt(document.getElementById('projectSort').value) || 0;
             projectData.status = document.getElementById('projectStatus').value;
 
+            // 收集关联技能ID
+            const skillCheckboxes = document.querySelectorAll('.skill-checkbox:checked');
+            const skillIds = Array.from(skillCheckboxes).map(cb => parseInt(cb.value));
+            if (skillIds.length > 0) {
+                projectData.skillIds = skillIds;
+            }
+
             try {
                 const url = editingProjectId ? API_BASE + '/projects/' + editingProjectId : API_BASE + '/projects';
                 const method = editingProjectId ? 'PUT' : 'POST';
@@ -1073,6 +1148,215 @@
                 const data = await res.json();
                 if (data.code === 0) {
                     loadProjects();
+                } else {
+                    showError(data.message || '删除失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // ===== 技能管理 =====
+
+        const SKILL_CATEGORIES = [
+            { value: 'frontend', label: '前端开发' },
+            { value: 'backend', label: '后端开发' },
+            { value: 'ai', label: '人工智能' },
+            { value: 'hardware', label: '硬件/嵌入式' },
+            { value: 'other', label: '其他' }
+        ];
+
+        const LEVEL_NAMES = ['', '入门', '熟悉', '掌握', '精通', '专家'];
+        let editingSkillId = null;
+
+        // 加载技能列表
+        async function loadSkills() {
+            const content = document.getElementById('contentArea');
+            content.innerHTML = '<div class="loading">加载技能...</div>';
+
+            try {
+                const res = await fetch('/api/skills');
+                const data = await res.json();
+                if (data.code === 0) {
+                    renderSkillList(data.data || []);
+                } else {
+                    content.innerHTML = '<div class="empty-state">加载失败</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                content.innerHTML = '<div class="empty-state">网络错误</div>';
+            }
+        }
+
+        // 渲染技能列表
+        function renderSkillList(skills) {
+            const content = document.getElementById('contentArea');
+
+            if (skills.length === 0) {
+                content.innerHTML = '<div class="empty-state"><h3>暂无技能</h3><p>点击下方按钮创建第一个技能</p><button class="btn btn-primary" style="margin-top:16px;" onclick="showSkillForm()">新建技能</button></div>';
+                return;
+            }
+
+            // 按分类分组
+            const grouped = {};
+            skills.forEach(s => {
+                const cat = s.category || 'other';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(s);
+            });
+
+            const categoryHtml = SKILL_CATEGORIES.map(c => {
+                if (!grouped[c.value]) return '';
+                const skillCards = grouped[c.value].map(s => `
+                    <div class="skill-card">
+                        <div class="skill-info">
+                            <div class="skill-name">${escapeHtml(s.name)}</div>
+                            <div class="skill-meta">
+                                <span class="skill-level level-${s.level || 1}">${LEVEL_NAMES[s.level || 1]}</span>
+                            </div>
+                        </div>
+                        <div class="skill-btns">
+                            <button class="btn btn-secondary btn-sm" onclick="editSkill(${s.id})">编辑</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSkill(${s.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+                return `
+                    <div class="skill-category">
+                        <h3 class="category-title">${c.label} (${grouped[c.value].length})</h3>
+                        <div class="skill-grid">${skillCards}</div>
+                    </div>
+                `;
+            }).join('');
+
+            content.innerHTML = `
+                <div style="margin-bottom:16px;">
+                    <button class="btn btn-primary" onclick="showSkillForm()">+ 新建技能</button>
+                </div>
+                ${categoryHtml}
+            `;
+        }
+
+        // 显示技能表单
+        function showSkillForm(skill = null) {
+            editingSkillId = skill ? skill.id : null;
+            const content = document.getElementById('contentArea');
+            const isEdit = !!skill;
+
+            const nameVal = skill ? escapeHtml(skill.name || '') : '';
+            const sortVal = skill ? (skill.sortOrder || 0) : 0;
+            const catVal = skill ? (skill.category || 'other') : 'other';
+            const levelVal = skill ? (skill.level || 1) : 1;
+            const iconVal = skill ? escapeHtml(skill.iconUrl || '') : '';
+
+            const categoryOptions = SKILL_CATEGORIES.map(c =>
+                `<option value="${c.value}" ${c.value === catVal ? 'selected' : ''}>${c.label}</option>`
+            ).join('');
+
+            const levelOptions = [1,2,3,4,5].map(l =>
+                `<option value="${l}" ${l === levelVal ? 'selected' : ''}>${LEVEL_NAMES[l]} (${l})</option>`
+            ).join('');
+
+            content.innerHTML = `
+<div class="form-group">
+    <label class="form-label">技能名称 *</label>
+    <input type="text" id="skillName" class="form-input" value="${nameVal}" required>
+</div>
+<div class="form-group">
+    <label class="form-label">分类</label>
+    <select id="skillCategory" class="form-select">
+        ${categoryOptions}
+    </select>
+</div>
+<div class="form-group">
+    <label class="form-label">熟练度</label>
+    <select id="skillLevel" class="form-select">
+        ${levelOptions}
+    </select>
+</div>
+<div class="form-group">
+    <label class="form-label">图标URL</label>
+    <input type="text" id="skillIconUrl" class="form-input" value="${iconVal}" placeholder="可选图标">
+</div>
+<div class="form-group">
+    <label class="form-label">排序</label>
+    <input type="number" id="skillSortOrder" class="form-input" value="${sortVal}">
+</div>
+<div style="margin-top:24px;">
+    <button class="btn btn-primary" onclick="saveSkill()">${isEdit ? '保存修改' : '创建技能'}</button>
+    <button class="btn btn-secondary" style="margin-left:8px;" onclick="loadSkills()">取消</button>
+</div>`;
+        }
+
+        // 保存技能
+        async function saveSkill() {
+            const name = document.getElementById('skillName').value.trim();
+            if (!name) {
+                showError('请填写技能名称');
+                return;
+            }
+
+            const skillData = {
+                name: name,
+                category: document.getElementById('skillCategory').value,
+                level: parseInt(document.getElementById('skillLevel').value),
+                sortOrder: parseInt(document.getElementById('skillSortOrder').value) || 0
+            };
+
+            const iconUrl = document.getElementById('skillIconUrl').value.trim();
+            if (iconUrl) skillData.iconUrl = iconUrl;
+
+            try {
+                const url = editingSkillId ? API_BASE + '/skills/' + editingSkillId : API_BASE + '/skills';
+                const method = editingSkillId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: getHeaders(),
+                    body: JSON.stringify(skillData)
+                });
+
+                const data = await res.json();
+                if (data.code === 0) {
+                    loadSkills();
+                } else {
+                    showError(data.message || '保存失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 编辑技能
+        async function editSkill(id) {
+            try {
+                const res = await fetch('/api/skills');
+                const data = await res.json();
+                if (data.code === 0) {
+                    const skill = data.data.find(s => s.id === id);
+                    if (skill) {
+                        showSkillForm(skill);
+                    } else {
+                        showError('技能不存在');
+                    }
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 删除技能
+        async function deleteSkill(id) {
+            if (!confirm('确定要删除这个技能吗？')) return;
+
+            try {
+                const res = await fetch(API_BASE + '/skills/' + id, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    loadSkills();
                 } else {
                     showError(data.message || '删除失败');
                 }

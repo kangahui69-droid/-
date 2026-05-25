@@ -152,6 +152,16 @@
             color: var(--text-secondary);
         }
 
+        .skill-link {
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .skill-link:hover {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
         .info-content code {
             background: var(--bg-primary);
             padding: 2px 6px;
@@ -301,9 +311,15 @@
             const container = document.getElementById('projectContainer');
             document.title = project.name + ' - TechForge';
 
-            const techTags = project.techStack
-                ? project.techStack.split(',').map(t => `<span class="tech-tag">${t.trim()}</span>`).join('')
-                : '';
+            // 优先使用关联技能，否则回退到 techStack
+            let techTags = '';
+            if (project.skills && project.skills.length > 0) {
+                techTags = project.skills.map(skill =>
+                    `<a href="/skills.html" class="tech-tag skill-link" data-category="${skill.category || 'other'}">${skill.name}</a>`
+                ).join('');
+            } else if (project.techStack) {
+                techTags = project.techStack.split(',').map(t => `<span class="tech-tag">${t.trim()}</span>`).join('');
+            }
 
             let featuresHtml = '';
             if (project.features) {

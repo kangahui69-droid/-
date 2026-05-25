@@ -56,6 +56,7 @@ public class SecurityConfig {
                                 "/api/articles/**",
                                 "/api/projects/**",
                                 "/api/skills",
+                                "/api/skills/tree",
                                 "/api/chat",
                                 "/api/comments",
                                 "/public/**",

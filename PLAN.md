@@ -446,3 +446,460 @@
 - [x] 项目创建
 - [x] 项目编辑
 - [x] 项目删除
+
+---
+
+## AI对话功能目标（技术顾问助手）
+
+### 需求概述
+
+将 AI 对话定位为「技术顾问」助手，专注于回答技术相关问题，帮助访客了解站主的技术能力、项目经验和技术栈。
+
+### 一、可衡量的终态
+
+#### 1. 基础对话功能
+- 回答技术相关问题（"你会什么技术？"、"你做过什么项目？"）
+- 项目介绍（"介绍一下你的项目"）
+- 技术栈查询（"你用过哪些框架？"）
+
+#### 2. 非技术问题处理
+- 对于非技术问题，礼貌拒绝并引导回到技术话题
+
+#### 3. 对话界面
+- 独立的 AI 对话页面（`chat.html`）
+- 左右聊天气泡区分
+- 3-4个快捷问题按钮
+
+#### 4. 后端接口
+- 优化系统 Prompt
+- 新增快捷问题配置接口
+
+---
+
+### 二、明确的验证方式
+
+| 验证点 | 预期结果 |
+|--------|----------|
+| 问"你会什么？" | 返回技术栈列表（Java、Python、RISC-V等） |
+| 问"介绍一下你的项目" | 返回项目列表及简介 |
+| 问"今天天气怎么样" | 回复"我只回答技术问题哦~" |
+| 点击快捷问题"你擅长什么" | 自动发送并得到正确回答 |
+| 刷新页面 | 对话内容清除 |
+| 无网络/API超时 | 显示预设回复或错误提示 |
+
+---
+
+### 三、关键约束
+
+- **Prompt 设计**：限定回答范围为技术相关问题
+- **知识库**：复用现有项目+文章内容（RAG）
+- **界面风格**：与现有 TechForge 风格一致
+- **对话历史**：仅当前会话，刷新清除
+- **响应时间**：≤ 5秒（包含打字机效果等待）
+- **敏感词过滤**：保持现有 XSS 防护
+
+---
+
+### 四、需修改的文件
+
+#### 后端
+| 文件 | 说明 |
+|------|------|
+| `ChatController.java` | 优化 Prompt，快捷问题配置 |
+
+#### 前端
+| 文件 | 说明 |
+|------|------|
+| `index.html` | 对话区域改造或新建 `chat.html` |
+| `chat.css`（可选） | 对话页面样式 |
+
+---
+
+### 五、实施顺序
+
+1. **阶段1** → 后端 Prompt 优化（最简单）
+2. **阶段2** → 对话前端改造（现有页面增强）
+3. **阶段3** → 快捷问题功能
+4. **阶段4** → 体验优化（打字机效果、加载状态）
+
+---
+
+### 六、完成状态
+
+- [ ] 后端 Prompt 优化
+- [ ] 对话前端改造
+- [ ] 快捷问题功能
+- [ ] 体验优化
+
+### 一、可衡量的终态
+
+| 指标 | 目标值 |
+|------|--------|
+| 支持技能分类数量 | ≥ 4个大类（前端/后端/AI/硬件） |
+| 单个技能属性 | 具备名称、分类、熟练度、图标 |
+| API响应时间 | ≤ 200ms |
+| 前端渲染帧率 | ≥ 30fps |
+
+---
+
+### 二、明确的验证方式
+
+#### 1. API验证
+
+```bash
+# 请求技能树数据
+GET /api/skills/tree
+
+# 预期响应示例
+{
+  "code": 200,
+  "data": {
+    "categories": [
+      {
+        "id": "frontend",
+        "name": "前端开发",
+        "skills": [
+          {"id": 1, "name": "JavaScript", "level": 4, "icon": "js"},
+          {"id": 2, "name": "Vue.js", "level": 3, "icon": "vue"}
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### 2. 前端验证
+
+- [ ] 技能按分类分组展示，默认收起/展开
+- [ ] 点击技能显示详情弹窗（熟练度说明、学习时间等）
+- [ ] 熟练度用颜色区分：1-2级蓝色、3级黄色、4-5级红色
+- [ ] 移动端自适应（折叠为列表）
+
+#### 3. 数据验证
+
+- [ ] 查询数据库，skill表新增字段：`category`、`level`、`icon_url`
+- [ ] 数据完整性检查：无null分类、无null名称
+
+---
+
+### 三、关键约束
+
+| 约束类型 | 具体内容 |
+|----------|----------|
+| **兼容性** | 不影响现有 `/api/skills` 旧接口，保持向后兼容 |
+| **性能** | 技能数据采用缓存，首次加载后不频繁查询数据库 |
+| **数据迁移** | 原有技能数据需平滑迁移，新字段有默认值 |
+| **前端无框架依赖** | 使用原生JS/CSS实现，不引入第三方可视化库（除非必要） |
+
+---
+
+### 四、数据库改动
+
+#### skill表新增字段
+
+| 字段名 | 类型 | 说明 | 默认值 |
+|---------|------|------|--------|
+| category | VARCHAR(50) | 分类（如frontend/backend/ai/hardware） | 'other' |
+| level | INT | 熟练度（1-5） | 1 |
+| icon_url | VARCHAR(255) | 图标URL | null |
+
+---
+
+### 五、API规划
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| /api/skills | GET | 原有接口，保持不变 |
+| /api/skills/tree | GET | 新增，返回树形结构的技能数据 |
+| /api/admin/skills | POST | 原有接口，支持新字段 |
+| /api/admin/skills/{id} | PUT | 支持修改分类/熟练度 |
+
+---
+
+### 六、完成状态
+
+- [x] Skill实体新增字段（category, level, icon_url）
+- [x] /api/skills/tree接口
+- [x] skills.html技能树前端页面
+- [x] SecurityConfig白名单
+
+---
+
+## 项目关联技能功能目标
+
+### 需求概述
+
+在管理端创建/编辑项目时，可选择该项目使用了哪些技能；在项目详情页展示该项目所关联的技能标签，点击可跳转到技能树页面。
+
+### 可衡量的终态
+
+#### 1. 数据库层
+- 创建 `project_skill` 中间表，记录项目与技能的多对多关系
+- 无数据冗余，关联查询通过中间表完成
+
+#### 2. 管理端项目表单
+- 项目创建/编辑表单增加"关联技能"多选字段
+- 以下拉框形式展示可选择的技能（按分类分组）
+- 已选技能以标签形式显示，支持移除
+
+#### 3. 项目列表页
+- 每个项目卡片显示关联技能的简短标签（最多显示3个，超出显示"+N"）
+
+#### 4. 项目详情页
+- "技术栈"区域显示关联的技能标签（非字符串）
+- 点击技能标签跳转到 `/skills.html?category=X` 或高亮对应技能
+
+### 明确的验证方式
+
+| 验证点 | 预期结果 |
+|--------|----------|
+| 进入管理端 → 项目管理 → 新建项目 | 表单包含"关联技能"下拉选项 |
+| 选择3个技能并保存 | 数据库 project_skill 表有3条记录 |
+| 编辑项目 → 修改关联技能 | 增删操作正常，标签实时更新 |
+| 访问项目详情页 | 显示技能标签而非纯文本技术栈 |
+| 点击技能标签 | 跳转技能树页面并高亮对应分类 |
+
+### 关键约束
+
+- 保留现有 `techStack` 字段（不删除，兼容旧数据）
+- 技能多选，按 category 显示分组
+- 仅显示已发布的技能供选择
+- 已有项目可通过编辑补充关联技能
+- 前端样式与现有技能卡片一致（按熟练度显色）
+
+---
+
+### 一、数据库改动
+
+#### project_skill 中间表
+
+| 字段名 | 类型 | 说明 | 约束 |
+|---------|------|------|------|
+| id | INT | 主键 | AUTO_INCREMENT |
+| project_id | INT | 关联项目ID | NOT NULL, FK |
+| skill_id | INT | 关联技能ID | NOT NULL, FK |
+| created_at | DATETIME | 创建时间 | DEFAULT NOW() |
+
+```sql
+CREATE TABLE project_skill (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    skill_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES skill(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_project_skill (project_id, skill_id)
+);
+```
+
+---
+
+### 二、后端改动
+
+#### 1. 新增实体类 ProjectSkill.java
+
+```java
+@Entity
+@Table(name = "project_skill")
+public class ProjectSkill {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "project_id", nullable = false)
+    private Integer projectId;
+
+    @Column(name = "skill_id", nullable = false)
+    private Integer skillId;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+```
+
+#### 2. 新增 Repository
+
+```java
+public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, Integer> {
+    List<ProjectSkill> findByProjectId(Integer projectId);
+    List<ProjectSkill> findBySkillId(Integer skillId);
+    void deleteByProjectId(Integer projectId);
+}
+```
+
+#### 3. 扩展 Project 实体
+
+```java
+@OneToMany(mappedBy = "projectId")
+private List<ProjectSkill> projectSkills;
+```
+
+#### 4. 扩展 ProjectController
+
+- GET `/api/projects/{id}` 返回时同时返回关联的技能详情
+- 管理端保存项目时处理关联技能的增删
+
+---
+
+### 三、前端改动
+
+#### 1. admin.html 项目表单
+- 增加"关联技能"多选下拉组件
+- 支持搜索过滤、按分类分组
+
+#### 2. project.html 项目详情页
+- 将 techStack 文本改为技能标签展示
+- 点击跳转技能树
+
+#### 3. projects.html 项目列表
+- 显示关联技能简短标签
+
+---
+
+### 四、API规划
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| /api/projects/{id} | GET | 返回项目详情时包含关联技能 |
+| /api/admin/projects | POST | 保存时处理关联技能IDs |
+| /api/admin/projects/{id} | PUT | 更新时处理关联技能IDs |
+
+---
+
+### 五、需修改的文件
+
+#### 后端 (新增/修改)
+| 文件 | 说明 |
+|------|------|
+| `entity/ProjectSkill.java` | 中间表实体 |
+| `repository/ProjectSkillRepository.java` | 数据访问 |
+| `entity/Project.java` | 添加 skills 关系 |
+| `controller/ProjectController.java` | 处理关联技能 |
+| 新增 SQL 脚本 | 建表语句 |
+
+#### 前端 (修改)
+| 文件 | 说明 |
+|------|------|
+| `static/admin.html` | 项目表单增加技能选择 |
+| `static/project.html` | 技能标签展示 |
+| `static/projects.html` | 列表显示技能标签 |
+
+---
+
+### 六、完成状态
+
+- [x] 创建 project_skill 中间表和实体
+- [x] ProjectController 返回关联技能
+- [x] admin.html 技能多选组件
+- [x] project.html 技能标签展示
+- [x] projects.html 列表技能标签
+
+---
+
+## 管理端技能管理功能目标
+
+### 需求概述
+
+在管理端实现技能的增删改查功能，包括：添加新技能、修改已有技能、删除已有技能、设置技能分类和熟练度。
+
+### 可衡量的终态
+
+#### 1. 技能列表页 (data-page="skills")
+- 显示所有技能卡片，每个卡片显示：名称、分类、熟练度、排序
+- 支持搜索/筛选
+- 显示"新建技能"按钮
+
+#### 2. 技能创建
+- 点击"新建技能"弹出/显示表单
+- 字段：名称、分类（下拉选择）、熟练度（1-5级）、图标URL、排序
+- 提交后保存到数据库
+
+#### 3. 技能编辑
+- 点击技能卡片的"编辑"按钮
+- 预填充所有字段
+- 保存后更新列表
+
+#### 4. 技能删除
+- 点击"删除"按钮
+- 确认后从数据库删除
+- 刷新列表
+
+### 明确的验证方式
+
+| 验证点 | 预期结果 |
+|--------|----------|
+| 进入管理端 → 点击"技能管理" | 显示技能列表（按分类分组） |
+| 点击"新建技能" → 填写表单 → 保存 | 列表显示新技能 |
+| 点击"编辑" → 修改名称 → 保存 | 列表显示更新后的名称 |
+| 点击"删除" → 确认 | 技能从列表移除 |
+| 刷新页面 | 技能数据持久化（数据库查询验证） |
+
+### 关键约束
+
+- 使用现有 `/api/admin/skills` 接口（POST 创建、DELETE 删除）
+- 需新增 PUT 接口用于编辑（当前后端只有 POST/DELETE）
+- 使用 `Authorization: Bearer <token>` 认证
+- 复用 admin.html 布局和样式
+- 分类选择：frontend、backend、ai、hardware、other
+- 熟练度：1-5 级选择器
+
+---
+
+### 一、后端改动
+
+#### 1. 扩展 SkillController
+
+```java
+@PutMapping("/admin/skills/{id}")
+@PreAuthorize("isAuthenticated()")
+public Result<?> updateSkill(@PathVariable Integer id, @RequestBody SkillRequest request) {
+    // 更新技能
+}
+```
+
+#### 2. 扩展 SkillRequest
+
+```java
+public static class SkillRequest {
+    private String name;
+    private Integer sortOrder;
+    private String category;      // 新增
+    private Integer level;        // 新增
+    private String iconUrl;       // 新增
+    // getters & setters
+}
+```
+
+---
+
+### 二、前端改动
+
+#### admin.html 新增技能管理页面
+
+- 加载技能列表函数 `loadSkills()`
+- 技能列表渲染函数 `renderSkillList(skills)`
+- 技能表单函数 `showSkillForm(skill?)`
+- 保存技能函数 `saveSkill()`
+- 删除技能函数 `deleteSkill(id)`
+- 技能卡片 CSS 样式
+
+---
+
+### 三、API规划
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| /api/admin/skills | POST | 创建技能 |
+| /api/admin/skills/{id} | PUT | 更新技能 |
+| /api/admin/skills/{id} | DELETE | 删除技能 |
+| /api/skills | GET | 获取所有技能（管理端也用此接口） |
+
+---
+
+### 四、完成状态
+
+- [x] 后端 PUT 接口
+- [x] SkillRequest 扩展字段
+- [x] admin.html 技能列表页
+- [x] 技能创建/编辑表单
+- [x] 技能删除功能

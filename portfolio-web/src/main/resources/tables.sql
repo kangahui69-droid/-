@@ -107,6 +107,18 @@ CREATE TABLE `chat_history` (
     INDEX idx_session (`session_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ========== 8.1 项目-技能中间表 ==========
+DROP TABLE IF EXISTS `project_skill`;
+CREATE TABLE `project_skill` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT NOT NULL,
+    `skill_id` INT NOT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `project`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`skill_id`) REFERENCES `skill`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY uk_project_skill (`project_id`, `skill_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ========== 9. 文章评论表 ==========
 DROP TABLE IF EXISTS `comment`;
 CREATE TABLE `comment` (

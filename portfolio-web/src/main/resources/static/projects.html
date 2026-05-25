@@ -278,11 +278,22 @@
             const card = document.createElement('article');
             card.className = 'section-card';
             card.onclick = () => window.location.href = `/project.html?id=${project.id}`;
+            // 优先使用关联技能，否则回退到 techStack
+            let tagsHtml = '';
+            if (project.skills && project.skills.length > 0) {
+                const displaySkills = project.skills.slice(0, 3);
+                const extraCount = project.skills.length - 3;
+                tagsHtml = displaySkills.map(skill =>
+                    `<span class="tag">${skill.name}</span>`
+                ).join('') + (extraCount > 0 ? `<span class="tag">+${extraCount}</span>` : '');
+            } else if (project.techStack) {
+                tagsHtml = project.techStack.split(',').slice(0, 3).map(t => `<span class="tag">${t.trim()}</span>`).join('');
+            }
             card.innerHTML = `
                 <h3 class="card-title">${project.name}</h3>
                 <p class="card-desc">${project.description || ''}</p>
                 <div class="card-tags">
-                    ${project.techStack ? project.techStack.split(',').slice(0, 3).map(t => `<span class="tag">${t.trim()}</span>`).join('') : ''}
+                    ${tagsHtml}
                 </div>
             `;
             return card;
