@@ -47,6 +47,18 @@ public class Project {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "project_type", length = 50)
+    private String projectType;
+
+    @Column(columnDefinition = "JSON")
+    private String features;
+
+    @Column(columnDefinition = "TEXT")
+    private String structure;
+
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -94,6 +106,18 @@ public class Project {
 
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    public String getProjectType() { return projectType; }
+    public void setProjectType(String projectType) { this.projectType = projectType; }
+
+    public String getFeatures() { return features; }
+    public void setFeatures(String features) { this.features = features; }
+
+    public String getStructure() { return structure; }
+    public void setStructure(String structure) { this.structure = structure; }
+
+    public String getSummary() { return summary; }
+    public void setSummary(String summary) { this.summary = summary; }
 
     public enum ProjectStatus {
         DRAFT, PUBLISHED

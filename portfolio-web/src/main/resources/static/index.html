@@ -511,7 +511,7 @@
         <div class="nav-links">
             <a class="nav-link" href="/">首页</a>
             <a class="nav-link" href="/articles.html">文章</a>
-            <a class="nav-link" href="#projects">项目</a>
+            <a class="nav-link" href="/projects.html">项目</a>
             <a class="nav-link" href="#skills">技能</a>
             <a class="nav-link" href="#chat">AI 对话</a>
             <a class="nav-link" href="/admin.html">后台</a>
@@ -578,8 +578,9 @@
         <section class="section" id="projects">
             <div class="section-header">
                 <h2 class="section-title">项目展示</h2>
+                <a href="/projects.html" class="link-btn" id="projectsMore" style="display: none;">查看更多</a>
             </div>
-            <div class="card-grid">
+            <div class="card-grid" id="projectsGrid">
                 <article class="section-card">
                     <h3 class="card-title">工业设备异常溯源系统</h3>
                     <p class="card-desc">基于RISC-V开发板的多传感器实时监控系统，实现异常检测与因果推断溯源。</p>
@@ -710,7 +711,61 @@
     }
 
     // 页面加载完成后加载文章
-    document.addEventListener('DOMContentLoaded', loadArticles);
+    document.addEventListener('DOMContentLoaded', () => {
+    loadArticles();
+    loadProjects();
+});
+
+    // 加载项目列表
+    async function loadProjects() {
+        try {
+            const res = await fetch('/api/projects');
+            console.log('Projects API response:', res);
+            const data = await res.json();
+            console.log('Projects data:', data);
+            if (data.code === 0 && data.data) {
+                const projects = data.data;
+                console.log('Projects count:', projects.length);
+                const grid = document.getElementById('projectsGrid');
+                const moreBtn = document.getElementById('projectsMore');
+
+                // 清空现有静态内容
+                grid.innerHTML = '';
+
+                // 取前3个项目
+                const displayProjects = projects.slice(0, 3);
+
+                // 生成项目卡片
+                displayProjects.forEach(project => {
+                    // 使用a标签包裹卡片，确保点击有效
+                    const card = document.createElement('a');
+                    card.href = '/project.html?id=' + project.id;
+                    card.className = 'section-card';
+                    card.style.display = 'block';
+                    card.innerHTML = `
+                        <h3 class="card-title">${project.name}</h3>
+                        <p class="card-desc">${project.description || ''}</p>
+                        <div class="card-tags">
+                            ${project.techStack ? project.techStack.split(',').slice(0, 3).map(t => `<span class="tag">${t.trim()}</span>`).join('') : ''}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // 如果项目数 > 3，显示"查看更多"按钮
+                if (projects.length > 3) {
+                    moreBtn.style.display = 'block';
+                }
+
+                // 如果没有项目，显示空状态
+                if (displayProjects.length === 0) {
+                    grid.innerHTML = '<div class="empty-state">暂无项目</div>';
+                }
+            }
+        } catch (err) {
+            console.error('加载项目失败:', err);
+        }
+    }
 
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();

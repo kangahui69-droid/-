@@ -57,6 +57,10 @@ public class ProjectController {
         project.setGithubUrl(request.getGithubUrl());
         project.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
         project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
+        project.setProjectType(request.getProjectType());
+        project.setFeatures(request.getFeatures());
+        project.setStructure(request.getStructure());
+        project.setSummary(request.getSummary());
 
         projectRepository.save(project);
         return Result.success("项目创建成功");
@@ -75,6 +79,10 @@ public class ProjectController {
                     if (request.getGithubUrl() != null) project.setGithubUrl(request.getGithubUrl());
                     if (request.getSortOrder() != null) project.setSortOrder(request.getSortOrder());
                     if (request.getStatus() != null) project.setStatus(request.getStatus());
+                    if (request.getProjectType() != null) project.setProjectType(request.getProjectType());
+                    if (request.getFeatures() != null) project.setFeatures(request.getFeatures());
+                    if (request.getStructure() != null) project.setStructure(request.getStructure());
+                    if (request.getSummary() != null) project.setSummary(request.getSummary());
 
                     projectRepository.save(project);
                     return Result.success("项目更新成功");
@@ -103,6 +111,10 @@ public class ProjectController {
         private String githubUrl;
         private Integer sortOrder;
         private ProjectStatus status;
+        private String projectType;
+        private String features;
+        private String structure;
+        private String summary;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -120,5 +132,13 @@ public class ProjectController {
         public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
         public ProjectStatus getStatus() { return status; }
         public void setStatus(ProjectStatus status) { this.status = status; }
+        public String getProjectType() { return projectType; }
+        public void setProjectType(String projectType) { this.projectType = projectType; }
+        public String getFeatures() { return features; }
+        public void setFeatures(String features) { this.features = features; }
+        public String getStructure() { return structure; }
+        public void setStructure(String structure) { this.structure = structure; }
+        public String getSummary() { return summary; }
+        public void setSummary(String summary) { this.summary = summary; }
     }
 }

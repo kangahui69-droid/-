@@ -481,12 +481,18 @@
             };
             document.getElementById('pageTitle').textContent = titles[page] || '文章管理';
 
+            // 清空内容区
+            document.getElementById('contentArea').innerHTML = '<div class="loading">加载中...</div>';
+
             switch(page) {
                 case 'articles':
                     loadArticles();
                     break;
                 case 'comments':
                     loadAllComments();
+                    break;
+                case 'projects':
+                    loadProjects();
                     break;
                 default:
                     showPlaceholder(page);
@@ -858,6 +864,222 @@
 
         // 页面加载时检查登录状态
         checkLogin();
+
+        // ===== 项目管理 =====
+
+        let editingProjectId = null;
+
+        // 加载项目列表
+        async function loadProjects() {
+            const content = document.getElementById('contentArea');
+            content.innerHTML = '<div class="loading">加载项目...</div>';
+
+            try {
+                const res = await fetch('/api/projects');
+                console.log('projects response:', res);
+
+                if (!res.ok) {
+                    content.innerHTML = '<div class="empty-state">HTTP ' + res.status + '</div>';
+                    return;
+                }
+
+                const data = await res.json();
+                console.log('projects data:', data);
+
+                if (data.code === 0) {
+                    renderProjectList(data.data || []);
+                } else {
+                    content.innerHTML = '<div class="empty-state">code=' + data.code + '</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                content.innerHTML = '<div class="empty-state">error</div>';
+            }
+        }
+
+        // 渲染项目列表
+        function renderProjectList(projects) {
+            const content = document.getElementById('contentArea');
+
+            if (projects.length === 0) {
+                content.innerHTML = '<div class="empty-state"><h3>暂无项目</h3><p>点击下方按钮创建第一个项目</p><button class="btn btn-primary" style="margin-top:16px;" onclick="showProjectForm()">新建项目</button></div>';
+                return;
+            }
+
+            content.innerHTML = '<div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="showProjectForm()">+ 新建项目</button></div><div class="article-list">' +
+                projects.map(p => '<div class="article-item"><div class="article-info"><div class="article-title">' + escapeHtml(p.name) + '<span class="article-status ' + (p.status === 'PUBLISHED' ? 'published' : 'draft') + '">' + (p.status === 'PUBLISHED' ? '已发布' : '草稿') + '</span></div><div class="article-meta">' + escapeHtml(p.techStack || '') + ' · ' + formatDate(p.createdAt) + '</div></div><div class="article-btns"><button class="btn btn-secondary btn-sm" onclick="editProject(' + p.id + ')">编辑</button><button class="btn btn-danger btn-sm" onclick="deleteProject(' + p.id + ')">删除</button></div></div>').join('') + '</div>';
+        }
+
+        // 显示项目表单
+        function showProjectForm(project = null) {
+            editingProjectId = project ? project.id : null;
+            const content = document.getElementById('contentArea');
+            const isEdit = !!project;
+
+            const nameVal = project ? escapeHtml(project.name || '') : '';
+            const descVal = project ? escapeHtml(project.description || '') : '';
+            const techVal = project ? escapeHtml(project.techStack || '') : '';
+            const typeVal = project ? escapeHtml(project.projectType || '') : '';
+            const featVal = project ? escapeHtml(project.features || '') : '';
+            const structVal = project ? escapeHtml(project.structure || '') : '';
+            const summVal = project ? escapeHtml(project.summary || '') : '';
+            const coverVal = project ? escapeHtml(project.coverImage || '') : '';
+            const demoVal = project ? escapeHtml(project.demoUrl || '') : '';
+            const githubVal = project ? escapeHtml(project.githubUrl || '') : '';
+            const sortVal = project ? (project.sortOrder || 0) : 0;
+            const statusVal = project ? project.status : 'DRAFT';
+
+            const html = `
+<div class="form-group">
+    <label class="form-label">项目名称 *</label>
+    <input type="text" id="projectName" class="form-input" value="${nameVal}" required>
+</div>
+<div class="form-group">
+    <label class="form-label">项目介绍 *</label>
+    <textarea id="projectDesc" class="form-textarea" rows="4" required>${descVal}</textarea>
+</div>
+<div class="form-group">
+    <label class="form-label">技术栈</label>
+    <input type="text" id="projectTech" class="form-input" value="${techVal}" placeholder="用逗号分隔">
+</div>
+<div class="form-group">
+    <label class="form-label">项目类型</label>
+    <input type="text" id="projectType" class="form-input" value="${typeVal}" placeholder="如：Web应用">
+</div>
+<div class="form-group">
+    <label class="form-label">功能模块</label>
+    <textarea id="projectFeatures" class="form-textarea" rows="3" placeholder='["功能1", "功能2"]'>${featVal}</textarea>
+</div>
+<div class="form-group">
+    <label class="form-label">项目结构</label>
+    <textarea id="projectStructure" class="form-textarea" rows="4" placeholder="项目文件夹结构">${structVal}</textarea>
+</div>
+<div class="form-group">
+    <label class="form-label">项目总结</label>
+    <textarea id="projectSummary" class="form-textarea" rows="3">${summVal}</textarea>
+</div>
+<div class="form-group">
+    <label class="form-label">封面图 URL</label>
+    <input type="text" id="projectCover" class="form-input" value="${coverVal}">
+</div>
+<div class="form-group">
+    <label class="form-label">Demo URL</label>
+    <input type="text" id="projectDemo" class="form-input" value="${demoVal}">
+</div>
+<div class="form-group">
+    <label class="form-label">GitHub URL</label>
+    <input type="text" id="projectGithub" class="form-input" value="${githubVal}">
+</div>
+<div class="form-group">
+    <label class="form-label">排序</label>
+    <input type="number" id="projectSort" class="form-input" value="${sortVal}">
+</div>
+<div class="form-group">
+    <label class="form-label">状态</label>
+    <select id="projectStatus" class="form-select">
+        <option value="DRAFT" ${statusVal === 'DRAFT' ? 'selected' : ''}>草稿</option>
+        <option value="PUBLISHED" ${statusVal === 'PUBLISHED' ? 'selected' : ''}>已发布</option>
+    </select>
+</div>
+<div style="margin-top:24px;">
+    <button class="btn btn-primary" onclick="saveProject()">${isEdit ? '保存修改' : '创建项目'}</button>
+    <button class="btn btn-secondary" style="margin-left:8px;" onclick="loadProjects()">取消</button>
+</div>`;
+            content.innerHTML = html;
+        }
+
+        // 编辑项目
+        async function editProject(id) {
+            try {
+                // 需要用后端私有接口，带认证
+                const res = await fetch('/api/projects/' + id);
+                const data = await res.json();
+                if (data.code === 0 && data.data) {
+                    showProjectForm(data.data);
+                } else {
+                    showError(data.message || '加载失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 保存项目
+        async function saveProject() {
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDesc').value.trim();
+
+            if (!name || !description) {
+                showError('请填写必填字段');
+                return;
+            }
+
+            const techStack = document.getElementById('projectTech').value.trim();
+            const projectType = document.getElementById('projectType').value.trim();
+            const features = document.getElementById('projectFeatures').value.trim();
+            const structure = document.getElementById('projectStructure').value.trim();
+            const summary = document.getElementById('projectSummary').value.trim();
+
+            // 构建数据对象，空字符串不发送
+            const projectData = { name, description };
+            if (techStack) projectData.techStack = techStack;
+            if (projectType) projectData.projectType = projectType;
+            if (features) projectData.features = features;
+            if (structure) projectData.structure = structure;
+            if (summary) projectData.summary = summary;
+
+            const coverImage = document.getElementById('projectCover').value.trim();
+            const demoUrl = document.getElementById('projectDemo').value.trim();
+            const githubUrl = document.getElementById('projectGithub').value.trim();
+
+            if (coverImage) projectData.coverImage = coverImage;
+            if (demoUrl) projectData.demoUrl = demoUrl;
+            if (githubUrl) projectData.githubUrl = githubUrl;
+
+            projectData.sortOrder = parseInt(document.getElementById('projectSort').value) || 0;
+            projectData.status = document.getElementById('projectStatus').value;
+
+            try {
+                const url = editingProjectId ? API_BASE + '/projects/' + editingProjectId : API_BASE + '/projects';
+                const method = editingProjectId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: getHeaders(),
+                    body: JSON.stringify(projectData)
+                });
+
+                const data = await res.json();
+                if (data.code === 0) {
+                    loadProjects();
+                } else {
+                    showError(data.message || '保存失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 删除项目
+        async function deleteProject(id) {
+            if (!confirm('确定要删除这个项目吗？')) return;
+
+            try {
+                // 删除需要使用管理端接口
+                const res = await fetch(API_BASE + '/projects/' + id, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    loadProjects();
+                } else {
+                    showError(data.message || '删除失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
     </script>
 </body>
 </html>
