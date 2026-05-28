@@ -4,18 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文章详情 - TechForge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* ========== 配色系统 ========== */
         :root {
-            --bg-primary: #f0f7ff;
-            --bg-card: #ffffff;
-            --text-primary: #1a1a1a;
-            --text-secondary: #666666;
-            --text-muted: #999999;
-            --accent: #06b6d4;
-            --accent-dark: #0891b2;
-            --border: #e5e5e5;
-            --shadow: rgba(0, 0, 0, 0.08);
+            --bg-primary: #0b1120;
+            --bg-card: #1a2332;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #38bdf8;
+            --accent-dark: #0ea5e9;
+            --border: #1e293b;
+            --shadow: rgba(0, 0, 0, 0.3);
         }
 
         * {
@@ -25,7 +28,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
@@ -38,7 +41,9 @@
             position: sticky;
             top: 0;
             height: 60px;
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -71,6 +76,25 @@
         }
 
         .nav-link:hover, .nav-link.active { color: var(--accent); }
+
+        /* ========== 阅读进度条 ========== */
+        .progress-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: transparent;
+            z-index: 99;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+            border-radius: 0 2px 2px 0;
+            transition: width 0.1s linear;
+        }
 
         /* ========== 主容器 ========== */
         .container {
@@ -145,24 +169,130 @@
         .article-content h3 { font-size: 16px; }
 
         .article-content code {
-            background: var(--bg-primary);
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 13px;
         }
 
         .article-content pre {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 16px;
-            border-radius: 8px;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+            border-radius: 12px;
             overflow-x: auto;
             margin: 16px 0;
+            border: 1px solid var(--border);
         }
 
         .article-content pre code {
             background: transparent;
             padding: 0;
+            color: inherit;
+        }
+
+        /* ========== 目录（TOC） ========== */
+        .toc {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .toc-title {
+            font-size: 15px;
+            font-weight: 600;
+            padding: 14px 18px;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-primary);
+        }
+
+        .toc-title::-webkit-details-marker { display: none; }
+        .toc-title::after {
+            content: '▸';
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .toc[open] .toc-title::after {
+            transform: rotate(90deg);
+        }
+
+        .toc-nav {
+            padding: 0 18px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: all 0.15s;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-secondary);
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .toc-link.active {
+            color: var(--accent);
+            border-left-color: var(--accent);
+            background: rgba(56, 189, 248, 0.08);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-h1 { padding-left: 10px; font-weight: 600; }
+        .toc-link.toc-h2 { padding-left: 20px; }
+        .toc-link.toc-h3 { padding-left: 30px; font-size: 12px; }
+
+        /* 桌面端：侧边栏 */
+        @media (min-width: 1280px) {
+            .toc {
+                position: fixed;
+                left: calc(50% + 424px);
+                top: 100px;
+                width: 200px;
+                max-height: calc(100vh - 140px);
+                overflow-y: auto;
+                background: rgba(26, 35, 50, 0.92);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                box-shadow: 0 2px 12px var(--shadow);
+                z-index: 50;
+            }
+
+            .toc[open] {
+                padding-bottom: 8px;
+            }
+
+            .toc-title {
+                font-size: 14px;
+                padding: 12px 14px;
+                cursor: default;
+            }
+
+            .toc-title::after { display: none; }
+            .toc-nav { padding: 0 10px 8px; }
+            .toc-link { font-size: 12px; padding: 5px 8px; }
+            .toc-link.toc-h2 { padding-left: 16px; }
+            .toc-link.toc-h3 { padding-left: 24px; }
+        }
+
+        @media (max-width: 1279px) {
+            /* 移动端折叠，默认关闭 */
+            .toc { margin-top: 0; }
         }
 
         /* ========== 评论区 ========== */
@@ -174,6 +304,17 @@
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 24px;
+            position: relative;
+        }
+
+        .comments-title::after {
+            content: '';
+            display: block;
+            width: 32px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+            border-radius: 2px;
+            margin-top: 8px;
         }
 
         .comment-form {
@@ -195,6 +336,8 @@
             resize: vertical;
             outline: none;
             margin-bottom: 12px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         .comment-textarea:focus {
@@ -288,6 +431,9 @@
     </style>
 </head>
 <body>
+    <!-- 阅读进度条 -->
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
     <!-- 导航栏 -->
     <nav class="navbar">
         <a href="/" class="nav-brand">Tech<span>Forge</span></a>
@@ -304,6 +450,12 @@
     <!-- 主体内容 -->
     <main class="container">
         <a href="/articles.html" class="back-link">← 返回文章列表</a>
+
+        <!-- 目录：桌面端侧边栏 / 移动端折叠 -->
+        <details class="toc" id="toc">
+            <summary class="toc-title">📑 目录</summary>
+            <nav class="toc-nav" id="tocNav"></nav>
+        </details>
 
         <article id="articleContainer">
             <div class="loading">加载中...</div>
@@ -362,6 +514,7 @@
         }
 
         // 渲染文章
+        let headingIndex = 0;
         function renderArticle(article) {
             const container = document.getElementById('articleContainer');
             const title = article.title || '';
@@ -369,11 +522,12 @@
             const views = article.views || 0;
             const createdAt = formatDate(article.createdAt);
 
-            // 简单处理Markdown内容
+            // 简单处理Markdown内容，标题带 ID
+            headingIndex = 0;
             const htmlContent = content
-                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^# (.*$)/gm, (_, text) => `<h1 id="h-${headingIndex++}">${text}</h1>`)
+                .replace(/^## (.*$)/gm, (_, text) => `<h2 id="h-${headingIndex++}">${text}</h2>`)
+                .replace(/^### (.*$)/gm, (_, text) => `<h3 id="h-${headingIndex++}">${text}</h3>`)
                 .replace(/\n\n/g, '</p><p>')
                 .replace(/`(.*?)`/g, '<code>$1</code>');
 
@@ -392,6 +546,78 @@
 
             // 更新页面标题
             document.title = title + ' - TechForge';
+
+            // 生成目录
+            buildToc();
+        }
+
+        function buildToc() {
+            const content = document.querySelector('.article-content');
+            if (!content) return;
+
+            const headings = content.querySelectorAll('h1, h2, h3');
+            const tocNav = document.getElementById('tocNav');
+            const toc = document.getElementById('toc');
+
+            if (headings.length === 0) {
+                toc.style.display = 'none';
+                return;
+            }
+            toc.style.display = '';
+
+            let html = '';
+            headings.forEach(h => {
+                const tag = h.tagName.toLowerCase();
+                const cls = 'toc-' + tag;
+                html += `<a class="toc-link ${cls}" href="#${h.id}">${h.textContent}</a>`;
+            });
+            tocNav.innerHTML = html;
+
+            // 桌面端默认展开
+            if (window.innerWidth >= 1280) {
+                toc.setAttribute('open', '');
+            }
+
+            // TOC 链接点击：平滑滚动
+            tocNav.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // 移动端点击后关闭目录
+                        if (window.innerWidth < 1200) {
+                            toc.removeAttribute('open');
+                        }
+                    }
+                });
+            });
+
+            // Scroll spy：高亮当前标题
+            setupScrollSpy(headings);
+        }
+
+        function setupScrollSpy(headings) {
+            const tocLinks = document.querySelectorAll('.toc-link');
+            if (headings.length === 0 || tocLinks.length === 0) return;
+
+            const observer = new IntersectionObserver(entries => {
+                let activeId = null;
+                entries.forEach(e => {
+                    if (e.isIntersecting) activeId = e.target.id;
+                });
+
+                if (activeId) {
+                    tocLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === '#' + activeId);
+                    });
+                }
+            }, {
+                rootMargin: '-80px 0px -70% 0px',
+                threshold: 0
+            });
+
+            headings.forEach(h => observer.observe(h));
         }
 
         // 提交评论
@@ -477,6 +703,16 @@
             const date = new Date(dateStr);
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         }
+
+        // 阅读进度条
+        function updateProgressBar() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progressFill').style.width = Math.min(progress, 100) + '%';
+        }
+
+        window.addEventListener('scroll', updateProgressBar, { passive: true });
 
         // 页面加载完成后加载文章和评论
         document.addEventListener('DOMContentLoaded', () => {

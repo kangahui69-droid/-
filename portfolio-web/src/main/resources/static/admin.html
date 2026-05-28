@@ -541,7 +541,8 @@
         // 加载文章列表
         async function loadArticles() {
             try {
-                const res = await fetch(API_BASE + '/articles', {
+                // 使用管理端接口，获取所有文章（包括草稿）
+                const res = await fetch(API_BASE + '/admin/articles/all?page=1&size=100', {
                     headers: getHeaders()
                 });
                 const data = await res.json();
@@ -607,6 +608,7 @@
         // 编辑文章
         async function editArticle(id) {
             try {
+                // 文章详情的公开接口也可以用，带上认证更稳妥
                 const res = await fetch('/api/articles/' + id, {
                     headers: getHeaders()
                 });

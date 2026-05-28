@@ -4,17 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>项目详情 - TechForge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #f0f7ff;
-            --bg-card: #ffffff;
-            --text-primary: #1a1a1a;
-            --text-secondary: #666666;
-            --text-muted: #999999;
-            --accent: #06b6d4;
-            --accent-dark: #0891b2;
-            --border: #e5e5e5;
-            --shadow: rgba(0, 0, 0, 0.08);
+            --bg-primary: #0b1120;
+            --bg-card: #1a2332;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #38bdf8;
+            --accent-dark: #0ea5e9;
+            --border: #1e293b;
+            --shadow: rgba(0, 0, 0, 0.3);
         }
 
         * {
@@ -24,7 +27,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
@@ -36,7 +39,9 @@
             position: sticky;
             top: 0;
             height: 60px;
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -88,14 +93,43 @@
 
         .back-link:hover { color: var(--accent); }
 
-        .project-header {
+        /* ========== 封面区 ========== */
+        .project-cover {
+            position: relative;
+            width: 100%;
+            min-height: 240px;
+            border-radius: 16px;
+            overflow: hidden;
             margin-bottom: 32px;
+            background: linear-gradient(135deg, #1a3650 0%, #162540 40%, #1a2332 100%);
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .project-cover.has-image {
+            min-height: 320px;
+        }
+
+        .project-cover-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .project-cover-overlay {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            padding: 40px 32px 28px;
+            background: linear-gradient(to top, rgba(11, 17, 32, 0.95) 0%, rgba(11, 17, 32, 0.4) 60%, transparent 100%);
         }
 
         .project-title {
             font-size: 28px;
             font-weight: 700;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             line-height: 1.4;
         }
 
@@ -104,32 +138,86 @@
             padding: 4px 12px;
             border-radius: 6px;
             font-size: 12px;
-            background: var(--bg-card);
+            background: rgba(56, 189, 248, 0.15);
             color: var(--accent);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(4px);
         }
 
-        .project-content {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 2px 12px var(--shadow);
+        /* ========== 卡片网格 ========== */
+        .project-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
             margin-bottom: 32px;
         }
 
-        .info-section {
-            margin-bottom: 24px;
+        .project-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 24px 28px;
+            border: 1px solid var(--border);
+            transition: border-color 0.2s, transform 0.2s;
         }
 
-        .info-section:last-child {
-            margin-bottom: 0;
+        .project-card:hover {
+            border-color: rgba(56, 189, 248, 0.25);
+            transform: translateY(-1px);
         }
 
-        .info-title {
-            font-size: 16px;
+        .card-title {
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.desc   { background: rgba(56, 189, 248, 0.12); }
+        .card-icon.feat   { background: rgba(167, 139, 250, 0.12); }
+        .card-icon.struct { background: rgba(251, 191, 36, 0.12); }
+        .card-icon.tech   { background: rgba(74, 222, 128, 0.12); }
+        .card-icon.sum    { background: rgba(251, 146, 60, 0.12); }
+        .card-icon.link   { background: rgba(248, 113, 113, 0.12); }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .feature-list li {
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 6px 10px 6px 28px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .feature-list li::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 14px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.6;
         }
 
         .info-content {
@@ -148,8 +236,9 @@
             padding: 6px 12px;
             border-radius: 8px;
             font-size: 14px;
-            background: var(--bg-primary);
-            color: var(--text-secondary);
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            font-weight: 500;
         }
 
         .skill-link {
@@ -158,8 +247,8 @@
         }
 
         .skill-link:hover {
-            background: #00d4ff;
-            color: #1a1a2e;
+            background: var(--accent);
+            color: #0b1120;
         }
 
         .info-content code {
@@ -188,7 +277,6 @@
         .links-row {
             display: flex;
             gap: 16px;
-            margin-top: 24px;
         }
 
         .link-btn {
@@ -240,8 +328,17 @@
             .project-title {
                 font-size: 22px;
             }
-            .project-content {
-                padding: 20px;
+            .project-card {
+                padding: 18px 16px;
+            }
+            .project-cover {
+                min-height: 180px;
+            }
+            .project-cover.has-image {
+                min-height: 240px;
+            }
+            .project-cover-overlay {
+                padding: 24px 16px 20px;
             }
             .links-row {
                 flex-direction: column;
@@ -285,25 +382,23 @@
             const container = document.getElementById('projectContainer');
 
             if (!projectId) {
-                container.innerHTML = '<p style="color:red">没有ID</p>';
+                container.innerHTML = '<div class="empty-state">项目不存在</div>';
                 return;
             }
 
-            container.innerHTML = '<p style="color:blue">正在加载 id=' + projectId + '...</p>';
+            container.innerHTML = '<div class="loading">加载中...</div>';
 
             try {
                 const res = await fetch('/api/projects/' + projectId);
                 const data = await res.json();
-                console.log('Got data:', data);
 
                 if (data.code === 0 && data.data) {
                     renderProject(data.data);
                 } else {
-                    container.innerHTML = '<p style="color:red">找不到项目</p>';
+                    container.innerHTML = '<div class="empty-state">项目不存在</div>';
                 }
             } catch (err) {
-                console.error('Error:', err);
-                container.innerHTML = '<p style="color:red">错误: ' + err.message + '</p>';
+                container.innerHTML = '<div class="empty-state">加载失败，请刷新页面重试</div>';
             }
         }
 
@@ -311,7 +406,7 @@
             const container = document.getElementById('projectContainer');
             document.title = project.name + ' - TechForge';
 
-            // 优先使用关联技能，否则回退到 techStack
+            // 技术标签
             let techTags = '';
             if (project.skills && project.skills.length > 0) {
                 techTags = project.skills.map(skill =>
@@ -321,69 +416,106 @@
                 techTags = project.techStack.split(',').map(t => `<span class="tech-tag">${t.trim()}</span>`).join('');
             }
 
+            // 封面区
+            let coverHtml;
+            if (project.coverImage) {
+                coverHtml = `
+                    <div class="project-cover has-image">
+                        <img class="project-cover-img" src="${project.coverImage}" alt="${project.name}" onerror="this.parentElement.classList.remove('has-image')">
+                        <div class="project-cover-overlay">
+                            <h1 class="project-title">${project.name}</h1>
+                            ${project.projectType ? `<span class="project-type">${project.projectType}</span>` : ''}
+                        </div>
+                    </div>`;
+            } else {
+                coverHtml = `
+                    <div class="project-cover">
+                        <div class="project-cover-overlay">
+                            <h1 class="project-title">${project.name}</h1>
+                            ${project.projectType ? `<span class="project-type">${project.projectType}</span>` : ''}
+                        </div>
+                    </div>`;
+            }
+
+            // 功能模块
             let featuresHtml = '';
             if (project.features) {
+                let features;
                 try {
-                    const features = typeof project.features === 'string' ? JSON.parse(project.features) : project.features;
-                    if (Array.isArray(features)) {
-                        featuresHtml = '<div class="info-section">' +
-                            '<h3 class="info-title">功能模块</h3>' +
-                            '<ul class="feature-list">' +
-                            features.map(f => `<li>${typeof f === 'string' ? f : f.name}</li>`).join('') +
-                            '</ul></div>';
-                    }
+                    features = typeof project.features === 'string' ? JSON.parse(project.features) : project.features;
                 } catch (e) {
-                    featuresHtml = '<div class="info-section"><h3 class="info-title">功能模块</h3><p class="info-content">' + project.features + '</p></div>';
+                    features = null;
+                }
+                if (Array.isArray(features) && features.length > 0) {
+                    featuresHtml = `
+                        <div class="project-card">
+                            <h3 class="card-title">
+                                <span class="card-icon feat">🧩</span>功能模块
+                            </h3>
+                            <ul class="feature-list">
+                                ${features.map(f => `<li>${escapeHtml(typeof f === 'string' ? f : f.name)}</li>`).join('')}
+                            </ul>
+                        </div>`;
                 }
             }
 
+            // 项目结构
             let structureHtml = '';
             if (project.structure) {
-                structureHtml = '<div class="info-section">' +
-                    '<h3 class="info-title">项目结构</h3>' +
-                    '<pre class="info-content"><code>' + escapeHtml(project.structure) + '</code></pre>' +
-                    '</div>';
+                structureHtml = `
+                    <div class="project-card">
+                        <h3 class="card-title">
+                            <span class="card-icon struct">📁</span>项目结构
+                        </h3>
+                        <pre class="info-content"><code>${escapeHtml(project.structure)}</code></pre>
+                    </div>`;
             }
 
+            // 项目总结
             let summaryHtml = '';
             if (project.summary) {
-                summaryHtml = '<div class="info-section">' +
-                    '<h3 class="info-title">项目总结</h3>' +
-                    '<p class="info-content">' + project.summary + '</p>' +
-                    '</div>';
+                summaryHtml = `
+                    <div class="project-card">
+                        <h3 class="card-title">
+                            <span class="card-icon sum">💡</span>项目总结
+                        </h3>
+                        <p class="info-content">${project.summary}</p>
+                    </div>`;
             }
 
+            // 外部链接
             let linksHtml = '';
-            if (project.githubUrl) {
-                linksHtml += `<a href="${project.githubUrl}" target="_blank" class="link-btn">GitHub</a>`;
-            }
-            if (project.demoUrl) {
-                linksHtml += `<a href="${project.demoUrl}" target="_blank" class="link-btn secondary">在线演示</a>`;
+            if (project.githubUrl || project.demoUrl) {
+                let btns = '';
+                if (project.githubUrl) {
+                    btns += `<a href="${project.githubUrl}" target="_blank" class="link-btn">GitHub</a>`;
+                }
+                if (project.demoUrl) {
+                    btns += `<a href="${project.demoUrl}" target="_blank" class="link-btn secondary">在线演示</a>`;
+                }
+                linksHtml = `
+                    <div class="project-card">
+                        <h3 class="card-title">
+                            <span class="card-icon link">🔗</span>相关链接
+                        </h3>
+                        <div class="links-row">${btns}</div>
+                    </div>`;
             }
 
             container.innerHTML = `
-                <header class="project-header">
-                    <h1 class="project-title">${project.name}</h1>
-                    ${project.projectType ? `<span class="project-type">${project.projectType}</span>` : ''}
-                    <div class="tech-stack">${techTags}</div>
-                </header>
-                <div class="project-content">
-                    <div class="info-section">
-                        <h3 class="info-title">项目介绍</h3>
+                ${coverHtml}
+                <div class="project-cards">
+                    <div class="project-card">
+                        <h3 class="card-title">
+                            <span class="card-icon desc">📖</span>项目介绍
+                        </h3>
                         <p class="info-content">${project.description || '暂无介绍'}</p>
+                        ${techTags ? `<div class="tech-stack" style="margin-top:14px">${techTags}</div>` : ''}
                     </div>
                     ${featuresHtml}
                     ${structureHtml}
-                    ${project.techStack ? `
-                    <div class="info-section">
-                        <h3 class="info-title">技术栈</h3>
-                        <div class="tech-stack">${techTags}</div>
-                    </div>
-                    ` : ''}
                     ${summaryHtml}
-                    ${linksHtml ? `
-                    <div class="links-row">${linksHtml}</div>
-                    ` : ''}
+                    ${linksHtml}
                 </div>
             `;
         }
