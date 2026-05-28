@@ -23,7 +23,7 @@ public class ProfileController {
 
     // ========== 管理接口 ==========
 
-    @PutMapping("/admin/profile")
+    @PutMapping("/profile")
     @PreAuthorize("isAuthenticated()")
     public Result<?> updateProfile(@RequestBody ProfileRequest request) {
         Profile profile = profileRepository.findById(1).orElseGet(() -> {

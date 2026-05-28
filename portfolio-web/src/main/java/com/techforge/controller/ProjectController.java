@@ -71,7 +71,7 @@ public class ProjectController {
 
     // ========== 管理接口 ==========
 
-    @PostMapping("/admin/projects")
+    @PostMapping("/projects")
     @PreAuthorize("isAuthenticated()")
     public Result<?> createProject(@RequestBody ProjectRequest request) {
         Project project = new Project();
@@ -84,9 +84,17 @@ public class ProjectController {
         project.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
         project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
         project.setProjectType(request.getProjectType());
-        project.setFeatures(request.getFeatures());
-        project.setStructure(request.getStructure());
-        project.setSummary(request.getSummary());
+        // 功能模块直接存储（无需JSON校验）
+        if (request.getFeatures() != null) {
+            project.setFeatures(request.getFeatures());
+        }
+        // TEXT 字段直接赋值
+        if (request.getStructure() != null) {
+            project.setStructure(request.getStructure());
+        }
+        if (request.getSummary() != null) {
+            project.setSummary(request.getSummary());
+        }
 
         projectRepository.save(project);
 
@@ -98,7 +106,7 @@ public class ProjectController {
         return Result.success("项目创建成功");
     }
 
-    @PutMapping("/admin/projects/{id}")
+    @PutMapping("/projects/{id}")
     @PreAuthorize("isAuthenticated()")
     public Result<?> updateProject(@PathVariable Integer id, @RequestBody ProjectRequest request) {
         return projectRepository.findById(id)
@@ -112,9 +120,16 @@ public class ProjectController {
                     if (request.getSortOrder() != null) project.setSortOrder(request.getSortOrder());
                     if (request.getStatus() != null) project.setStatus(request.getStatus());
                     if (request.getProjectType() != null) project.setProjectType(request.getProjectType());
-                    if (request.getFeatures() != null) project.setFeatures(request.getFeatures());
-                    if (request.getStructure() != null) project.setStructure(request.getStructure());
-                    if (request.getSummary() != null) project.setSummary(request.getSummary());
+                    // 功能模块直接存储（无需JSON校验）
+                    if (request.getFeatures() != null) {
+                        project.setFeatures(request.getFeatures());
+                    }
+                    if (request.getStructure() != null) {
+                        project.setStructure(request.getStructure());
+                    }
+                    if (request.getSummary() != null) {
+                        project.setSummary(request.getSummary());
+                    }
 
                     projectRepository.save(project);
 
@@ -128,6 +143,7 @@ public class ProjectController {
                 .orElse(Result.error(404, "项目不存在"));
     }
 
+    
     private void saveProjectSkills(Integer projectId, List<Integer> skillIds) {
         for (Integer skillId : skillIds) {
             ProjectSkill ps = new ProjectSkill();
@@ -138,15 +154,18 @@ public class ProjectController {
     }
 
     private void updateProjectSkills(Integer projectId, List<Integer> newSkillIds) {
-        // 删除旧的
-        projectSkillRepository.deleteByProjectId(projectId);
+        // 先查询并删除旧的关联
+        List<ProjectSkill> existing = projectSkillRepository.findByProjectId(projectId);
+        for (ProjectSkill ps : existing) {
+            projectSkillRepository.delete(ps);
+        }
         // 添加新的
         if (newSkillIds != null && !newSkillIds.isEmpty()) {
             saveProjectSkills(projectId, newSkillIds);
         }
     }
 
-    @DeleteMapping("/admin/projects/{id}")
+    @DeleteMapping("/projects/{id}")
     @PreAuthorize("isAuthenticated()")
     public Result<?> deleteProject(@PathVariable Integer id) {
         return projectRepository.findById(id)

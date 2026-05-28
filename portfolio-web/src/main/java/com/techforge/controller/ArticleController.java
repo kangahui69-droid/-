@@ -71,7 +71,7 @@ public class ArticleController {
 
     // ========== 管理接口 ==========
 
-    @PostMapping("/admin/articles")
+    @PostMapping("/articles")
     @PreAuthorize("isAuthenticated()")
     public Result<?> createArticle(@RequestBody ArticleRequest request) {
         Article article = new Article();
@@ -86,7 +86,7 @@ public class ArticleController {
         return Result.success("文章创建成功");
     }
 
-    @PutMapping("/admin/articles/{id}")
+    @PutMapping("/articles/{id}")
     @PreAuthorize("isAuthenticated()")
     public Result<?> updateArticle(@PathVariable Integer id, @RequestBody ArticleRequest request) {
         return articleRepository.findById(id)
@@ -104,7 +104,7 @@ public class ArticleController {
                 .orElse(Result.error(404, "文章不存在"));
     }
 
-    @DeleteMapping("/admin/articles/{id}")
+    @DeleteMapping("/articles/{id}")
     @PreAuthorize("isAuthenticated()")
     public Result<?> deleteArticle(@PathVariable Integer id) {
         return articleRepository.findById(id)
@@ -116,7 +116,7 @@ public class ArticleController {
                 .orElse(Result.error(404, "文章不存在"));
     }
 
-    @GetMapping("/admin/articles")
+    @GetMapping("/admin/articles/all")
     @PreAuthorize("isAuthenticated()")
     public Result<Map<String, Object>> getAllArticles(
             @RequestParam(defaultValue = "1") int page,

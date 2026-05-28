@@ -319,6 +319,71 @@
 
         .ai-send-btn:hover { background: var(--accent-dark); }
 
+        .ai-send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* 快捷问题按钮 */
+        .ai-quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .quick-btn {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* 聊天气泡 */
+        .chat-message { margin-bottom: 12px; }
+
+        .chat-message.user {
+            text-align: right;
+        }
+
+        .chat-message.ai {
+            text-align: left;
+        }
+
+        .chat-bubble {
+            display: inline-block;
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .chat-message.user .chat-bubble {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.ai .chat-bubble {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
         /* ========== 页脚 ========== */
         .footer {
             padding: 32px 0;
@@ -633,12 +698,17 @@
     <main class="container">
         <section class="ai-chat-section" id="chat">
             <h2 class="ai-chat-title">AI 智能对话</h2>
-            <div class="ai-chat-display">
+            <div class="ai-chat-display" id="chatDisplay">
                 <p>你好！我是 TechForge AI 助手，有什么我可以帮助你的吗？</p>
             </div>
+            <div class="ai-quick-questions">
+                <button class="quick-btn" data-question="你擅长什么技术？">你擅长什么？</button>
+                <button class="quick-btn" data-question="介绍一下你的项目">介绍一下你的项目</button>
+                <button class="quick-btn" data-question="你用过哪些框架？">你用过哪些框架？</button>
+            </div>
             <div class="ai-input-row">
-                <input type="text" class="ai-input" placeholder="请输入您的问题...">
-                <button class="ai-send-btn">发送</button>
+                <input type="text" class="ai-input" id="aiInput" placeholder="请输入您的问题...">
+                <button class="ai-send-btn" id="aiSendBtn">发送</button>
             </div>
         </section>
     </main>
@@ -710,11 +780,132 @@
         }
     }
 
-    // 页面加载完成后加载文章
+    // 页面加载完成后加载数据
     document.addEventListener('DOMContentLoaded', () => {
     loadArticles();
     loadProjects();
+    loadSkills();
+    initChat();
 });
+
+// AI 对话功能
+function initChat() {
+    const chatDisplay = document.getElementById('chatDisplay');
+    const aiInput = document.getElementById('aiInput');
+    const aiSendBtn = document.getElementById('aiSendBtn');
+
+    if (!chatDisplay || !aiInput || !aiSendBtn) return;
+
+    // 发送消息
+    async function sendMessage(question) {
+        if (!question || question.trim() === '') {
+            alert('请输入问题');
+            return;
+        }
+
+        // 显示用户消息
+        appendMessage('user', question);
+        aiInput.value = '';
+
+        // 禁用按钮
+        aiSendBtn.disabled = true;
+        aiSendBtn.textContent = '思考中...';
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await res.json();
+            if (data.code === 0 && data.data && data.data.answer) {
+                appendMessage('ai', data.data.answer);
+            } else {
+                appendMessage('ai', '抱歉，回答生成失败，请稍后再试');
+            }
+        } catch (err) {
+            console.error('Chat error:', err);
+            appendMessage('ai', '网络错误，请检查网络连接');
+        } finally {
+            aiSendBtn.disabled = false;
+            aiSendBtn.textContent = '发送';
+        }
+    }
+
+    // 添加消息到界面
+    function appendMessage(role, content) {
+        // 清除欢迎语
+        const welcomeMsg = chatDisplay.querySelector('p');
+        if (welcomeMsg && welcomeMsg.textContent.includes('你好')) {
+            welcomeMsg.remove();
+        }
+
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-message ${role}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        bubble.textContent = content;
+
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'chat-time';
+        timeDiv.textContent = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+        msgDiv.appendChild(bubble);
+        msgDiv.appendChild(timeDiv);
+        chatDisplay.appendChild(msgDiv);
+        chatDisplay.scrollTop = chatDisplay.scrollHeight;
+    }
+
+    // 发送按钮点击
+    aiSendBtn.addEventListener('click', () => sendMessage(aiInput.value));
+
+    // 回车发送
+    aiInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage(aiInput.value);
+        }
+    });
+
+    // 快捷问题按钮
+    document.querySelectorAll('.quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const question = btn.dataset.question;
+            sendMessage(question);
+        });
+    });
+}
+
+    // 加载技能列表
+    async function loadSkills() {
+        try {
+            const res = await fetch('/api/skills');
+            const data = await res.json();
+            if (data.code === 0 && data.data) {
+                const skills = data.data;
+                const grid = document.querySelector('.skills-grid');
+
+                // 清空现有静态内容
+                grid.innerHTML = '';
+
+                // 生成技能卡片
+                skills.forEach(skill => {
+                    const card = document.createElement('div');
+                    card.className = 'skill-card';
+                    card.textContent = skill.name;
+                    grid.appendChild(card);
+                });
+
+                // 如果没有技能，显示空状态
+                if (skills.length === 0) {
+                    grid.innerHTML = '<div class="empty-state">暂无技能</div>';
+                }
+            }
+        } catch (err) {
+            console.error('加载技能失败:', err);
+        }
+    }
 
     // 加载项目列表
     async function loadProjects() {
@@ -744,7 +935,7 @@
                     card.style.display = 'block';
                     card.innerHTML = `
                         <h3 class="card-title">${project.name}</h3>
-                        <p class="card-desc">${project.description || ''}</p>
+                        <p class="card-desc">${project.description ? (project.description.length > 80 ? project.description.substring(0, 80) + '...' : project.description) : ''}</p>
                         <div class="card-tags">
                             ${project.techStack ? project.techStack.split(',').slice(0, 3).map(t => `<span class="tag">${t.trim()}</span>`).join('') : ''}
                         </div>

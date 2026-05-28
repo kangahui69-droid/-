@@ -84,7 +84,7 @@ public class SkillController {
 
     // ========== 管理接口 ==========
 
-    @PostMapping("/admin/skills")
+    @PostMapping("/skills")
     @PreAuthorize("isAuthenticated()")
     public Result<?> createSkill(@RequestBody SkillRequest request) {
         if (request.getName() == null || request.getName().isBlank()) {
@@ -102,7 +102,7 @@ public class SkillController {
         return Result.success("技能添加成功");
     }
 
-    @PutMapping("/admin/skills/{id}")
+    @PutMapping("/skills/{id}")
     @PreAuthorize("isAuthenticated()")
     public Result<?> updateSkill(@PathVariable Integer id, @RequestBody SkillRequest request) {
         return skillRepository.findById(id)
@@ -119,7 +119,7 @@ public class SkillController {
                 .orElse(Result.error(404, "技能不存在"));
     }
 
-    @DeleteMapping("/admin/skills/{id}")
+    @DeleteMapping("/skills/{id}")
     @PreAuthorize("isAuthenticated()")
     public Result<?> deleteSkill(@PathVariable Integer id) {
         return skillRepository.findById(id)

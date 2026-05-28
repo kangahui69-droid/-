@@ -51,7 +51,7 @@ public class Project {
     @Column(name = "project_type", length = 50)
     private String projectType;
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     private String features;
 
     @Column(columnDefinition = "TEXT")

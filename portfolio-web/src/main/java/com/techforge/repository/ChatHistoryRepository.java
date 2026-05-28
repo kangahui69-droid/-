@@ -13,4 +13,9 @@ public interface ChatHistoryRepository extends JpaRepository<ChatHistory, Intege
      * 按会话ID查询 (最近20条)
      */
     List<ChatHistory> findTop20BySessionIdOrderByCreatedAtDesc(String sessionId);
+
+    /**
+     * 按会话ID查询全部历史
+     */
+    List<ChatHistory> findBySessionIdOrderByCreatedAtDesc(String sessionId);
 }
