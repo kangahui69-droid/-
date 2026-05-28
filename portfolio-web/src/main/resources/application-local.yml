@@ -6,10 +6,19 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/techforge?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: kang2005.
+    password: "${DB_PASSWORD:}"
 
 jwt:
   secret: TechForge-Local-Dev-Secret-Key-For-Testing-Purposes-Only-256BitsLong
+
+minimax:
+  api-key: "${MINIMAX_API_KEY:sk-cp-wy-KDQ6ZqtPFVKEI9LQS_0V_IZMRyHnEYMGXNRYe3_ehayrH0V2FpoFVH7060DgF2eaCTRvV5L_p_uwD5JQ8iG3ROsPM0LzOJodJjnwGAK2DnSnZWZAkagY}"
+  model: "MiniMax-M2.5"
+  api-url: "https://api.minimax.chat/v1/chat/completions"
+
+ai:
+  minimax:
+    key: "${MINIMAX_API_KEY:sk-cp-wy-KDQ6ZqtPFVKEI9LQS_0V_IZMRyHnEYMGXNRYe3_ehayrH0V2FpoFVH7060DgF2eaCTRvV5L_p_uwD5JQ8iG3ROsPM0LzOJodJjnwGAK2DnSnZWZAkagY}"
 
 logging:
   level:
