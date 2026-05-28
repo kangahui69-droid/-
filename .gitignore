@@ -27,6 +27,11 @@ buildNumber.properties
 .DS_Store
 Thumbs.db
 
+# Sensitive local config
+src/main/resources/application-local.yml
+CLAUDE.md
+.claude/
+
 # Logs
 *.log
 
