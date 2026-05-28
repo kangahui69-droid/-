@@ -682,17 +682,17 @@
         <div class="hero-wrapper">
             <canvas id="particlesCanvas"></canvas>
             <section class="hero-card" id="home">
-            <div class="hero-avatar">辉</div>
-            <h1 class="hero-name">小辉</h1>
-            <p class="hero-role">RISC-V 物联网 · AI 开发者</p>
-            <p class="hero-bio">
+            <div class="hero-avatar" id="heroAvatar">辉</div>
+            <h1 class="hero-name" id="heroName">小辉</h1>
+            <p class="hero-role" id="heroRole">RISC-V 物联网 · AI 开发者</p>
+            <p class="hero-bio" id="heroBio">
                 专注于边缘AI与工业智能应用开发。<br>
                 参与 RISC-V 物联网竞赛方案设计与实现，拥有多个从 0 到 1 的项目经验。
             </p>
             <div class="hero-links">
                 <a href="#articles" class="link-btn">了解更多 →</a>
-                <a href="#projects" class="link-btn">GitHub</a>
-                <a href="#chat" class="link-btn">联系</a>
+                <a href="#" class="link-btn" id="heroGithubLink">GitHub</a>
+                <a href="#" class="link-btn" id="heroEmailLink">联系</a>
             </div>
             <div class="hero-stats">
                 <div class="hero-stat">
@@ -922,8 +922,79 @@
     loadArticles();
     loadProjects();
     loadSkills();
+    loadProfile();
     initChat();
 });
+
+// 加载个人资料
+async function loadProfile() {
+    try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+
+        if (data.code === 0 && data.data) {
+            renderProfile(data.data);
+        }
+        // 如果没有数据或请求失败，保持静态默认内容
+    } catch (err) {
+        console.error('加载个人资料失败:', err);
+    }
+}
+
+// 渲染个人资料到首页
+function renderProfile(profile) {
+    const year = new Date().getFullYear();
+
+    // 头像
+    const avatarEl = document.getElementById('heroAvatar');
+    if (profile.avatar) {
+        avatarEl.style.backgroundImage = 'url(' + profile.avatar + ')';
+        avatarEl.textContent = '';
+    } else {
+        avatarEl.style.backgroundImage = '';
+        avatarEl.textContent = profile.name ? profile.name.charAt(0) : '辉';
+    }
+
+    // 名字
+    const nameEl = document.getElementById('heroName');
+    if (profile.name) {
+        nameEl.textContent = profile.name;
+    }
+
+    // 角色/简介
+    const roleEl = document.getElementById('heroRole');
+    if (profile.bio) {
+        roleEl.textContent = profile.bio + ' · ' + year;
+    } else {
+        roleEl.textContent = roleEl.textContent || 'AI 开发者 · ' + year;
+    }
+
+    // 详细介绍
+    const bioEl = document.getElementById('heroBio');
+    if (profile.about) {
+        bioEl.textContent = profile.about;
+    }
+
+    // GitHub 链接
+    const githubLink = document.getElementById('heroGithubLink');
+    const github = profile.socialGithub || (profile.social && profile.social.github);
+    if (github) {
+        githubLink.href = github;
+        githubLink.style.display = '';
+    } else {
+        githubLink.style.display = 'none';
+    }
+
+    // 联系链接（邮箱）
+    const emailLink = document.getElementById('heroEmailLink');
+    const email = profile.socialEmail || (profile.social && profile.social.email);
+    if (email) {
+        emailLink.href = 'mailto:' + email;
+        emailLink.style.display = '';
+    } else {
+        emailLink.style.display = 'none';
+    }
+}
 
 // AI 对话功能
 function initChat() {

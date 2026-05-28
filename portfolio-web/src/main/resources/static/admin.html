@@ -413,6 +413,166 @@
 
         /* 隐藏 */
         .hidden { display: none !important; }
+
+        /* 个人资料页面 */
+        .profile-page {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            min-height: 500px;
+        }
+
+        .profile-editor {
+            padding: 24px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .profile-preview {
+            padding: 24px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .profile-preview h3 {
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .profile-form-group {
+            margin-bottom: 16px;
+        }
+
+        .profile-form-group label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .profile-form-group .char-count {
+            float: right;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .profile-form-group .char-count.warn {
+            color: #f59e0b;
+        }
+
+        .profile-form-group .char-count.error {
+            color: var(--danger);
+        }
+
+        .avatar-preview-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            margin-top: 8px;
+            object-fit: cover;
+            background: var(--bg-primary);
+        }
+
+        /* 预览区 - 复刻首页英雄卡片 */
+        .preview-hero-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+            border: 1px solid var(--border);
+        }
+
+        .preview-hero-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            font-weight: 600;
+            color: #fff;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .preview-hero-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .preview-hero-role {
+            font-size: 14px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .preview-hero-bio {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            text-align: left;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .preview-hero-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .preview-hero-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .preview-hero-links a:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .preview-hero-links a.empty {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .profile-page {
+                grid-template-columns: 1fr;
+            }
+            .profile-preview {
+                order: -1;
+            }
+        }
+
+        /* 保存按钮区域 */
+        .profile-save-area {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
     </style>
 </head>
 <body>
@@ -520,6 +680,9 @@
                     break;
                 case 'skills':
                     loadSkills();
+                    break;
+                case 'profile':
+                    loadProfile();
                     break;
                 default:
                     showPlaceholder(page);
@@ -908,7 +1071,7 @@
                     allSkills = data.data || [];
                 }
             } catch (err) {
-                console.error('load skills error:', err);
+                // 技能加载失败不影响项目管理
             }
         }
 
@@ -922,24 +1085,21 @@
 
             try {
                 const res = await fetch('/api/projects');
-                console.log('projects response:', res);
 
                 if (!res.ok) {
-                    content.innerHTML = '<div class="empty-state">HTTP ' + res.status + '</div>';
+                    content.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>请检查网络连接</p></div>';
                     return;
                 }
 
                 const data = await res.json();
-                console.log('projects data:', data);
 
                 if (data.code === 0) {
                     renderProjectList(data.data || []);
                 } else {
-                    content.innerHTML = '<div class="empty-state">code=' + data.code + '</div>';
+                    content.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>' + (data.message || '请稍后重试') + '</p></div>';
                 }
             } catch (err) {
-                console.error(err);
-                content.innerHTML = '<div class="empty-state">error</div>';
+                content.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>网络错误，请稍后重试</p></div>';
             }
         }
 
@@ -1185,7 +1345,6 @@
                     content.innerHTML = '<div class="empty-state">加载失败</div>';
                 }
             } catch (err) {
-                console.error(err);
                 content.innerHTML = '<div class="empty-state">网络错误</div>';
             }
         }
@@ -1364,6 +1523,250 @@
                 }
             } catch (err) {
                 showError('网络错误');
+            }
+        }
+
+        // ===== 个人资料管理 =====
+
+        let profileData = {};
+
+        // 加载个人资料
+        async function loadProfile() {
+            const content = document.getElementById('contentArea');
+            content.innerHTML = '<div class="loading">加载个人资料...</div>';
+
+            try {
+                const res = await fetch('/api/profile');
+                const data = await res.json();
+                if (data.code === 0 && data.data) {
+                    profileData = data.data;
+                    renderProfilePage(profileData);
+                } else {
+                    // 没有数据时使用默认值
+                    profileData = {
+                        id: 1,
+                        name: '小辉',
+                        avatar: '',
+                        bio: '',
+                        about: '',
+                        socialGithub: '',
+                        socialEmail: '',
+                        socialX: ''
+                    };
+                    renderProfilePage(profileData);
+                }
+            } catch (err) {
+                content.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        // 渲染个人资料页面
+        function renderProfilePage(data) {
+            const content = document.getElementById('contentArea');
+
+            content.innerHTML = `
+                <div class="profile-page">
+                    <!-- 编辑区 -->
+                    <div class="profile-editor">
+                        <h3 style="margin-bottom:20px;">个人资料编辑</h3>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">头像 URL</label>
+                            <input type="text" id="profileAvatar" class="form-input" value="${escapeHtml(data.avatar || '')}" placeholder="头像图片链接" oninput="onProfileInput('avatar')">
+                            <img id="avatarPreviewImg" src="${escapeHtml(data.avatar || '')}" class="avatar-preview-img" style="display: ${data.avatar ? 'block' : 'none'}" alt="头像预览">
+                        </div>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">名字 *</label>
+                            <input type="text" id="profileName" class="form-input" value="${escapeHtml(data.name || '')}" placeholder="你的名字" oninput="onProfileInput('name')">
+                        </div>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">角色/简介</label>
+                            <input type="text" id="profileBio" class="form-input" value="${escapeHtml(data.bio || '')}" placeholder="一句话介绍自己" maxlength="50" oninput="onProfileInput('bio')">
+                            <span class="char-count" id="bioCharCount">${(data.bio || '').length}/50</span>
+                        </div>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">详细介绍</label>
+                            <textarea id="profileAbout" class="form-textarea" rows="6" placeholder="详细介绍，支持 Markdown 语法" oninput="onProfileInput('about')">${escapeHtml(data.about || '')}</textarea>
+                        </div>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">GitHub</label>
+                            <input type="text" id="profileGithub" class="form-input" value="${escapeHtml(data.socialGithub || '')}" placeholder="https://github.com/username" oninput="onProfileInput('github')">
+                        </div>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">邮箱</label>
+                            <input type="text" id="profileEmail" class="form-input" value="${escapeHtml(data.socialEmail || '')}" placeholder="your@email.com" oninput="onProfileInput('email')">
+                        </div>
+
+                        <div class="profile-form-group">
+                            <label class="form-label">X (Twitter)</label>
+                            <input type="text" id="profileX" class="form-input" value="${escapeHtml(data.socialX || '')}" placeholder="@username" oninput="onProfileInput('x')">
+                        </div>
+
+                        <div class="profile-save-area">
+                            <button class="btn btn-primary" onclick="saveProfile()">保存</button>
+                            <button class="btn btn-secondary" onclick="loadProfile()">取消</button>
+                        </div>
+                    </div>
+
+                    <!-- 预览区 -->
+                    <div class="profile-preview">
+                        <h3>实时预览</h3>
+                        <div class="preview-hero-card">
+                            <div class="preview-hero-avatar" id="previewAvatar">${data.name ? data.name.charAt(0) : '辉'}</div>
+                            <h1 class="preview-hero-name" id="previewName">${escapeHtml(data.name || '小辉')}</h1>
+                            <p class="preview-hero-role" id="previewRole">${escapeHtml(data.bio || 'AI 开发者')} · ${new Date().getFullYear()}</p>
+                            <p class="preview-hero-bio" id="previewAbout">${escapeHtml(data.about || '点击上方自我介绍，了解更多关于我的信息...')}</p>
+                            <div class="preview-hero-links">
+                                <a href="${data.socialGithub || '#'}" id="previewGithubLink" class="${data.socialGithub ? '' : 'empty'}">GitHub</a>
+                                <a href="${data.socialEmail ? 'mailto:' + data.socialEmail : '#'}" id="previewEmailLink" class="${data.socialEmail ? '' : 'empty'}">邮箱</a>
+                                <a href="${data.socialX ? 'https://twitter.com/' + data.socialX.replace('@','') : '#'}" id="previewXLink" class="${data.socialX ? '' : 'empty'}">X</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 更新字符计数样式
+            updateBioCharCount();
+        }
+
+        // 输入监听 → 实时预览
+        function onProfileInput(field) {
+            const value = document.getElementById('profile' + capitalize(field)).value;
+
+            // 更新本地数据
+            if (field === 'avatar') {
+                profileData.avatar = value;
+                const img = document.getElementById('avatarPreviewImg');
+                if (value) {
+                    img.src = value;
+                    img.style.display = 'block';
+                } else {
+                    img.style.display = 'none';
+                }
+                updatePreviewAvatar(value);
+            } else if (field === 'name') {
+                profileData.name = value;
+                document.getElementById('previewName').textContent = value || '小辉';
+                updatePreviewAvatar(profileData.avatar, value);
+            } else if (field === 'bio') {
+                profileData.bio = value;
+                document.getElementById('previewRole').textContent = (value || 'AI 开发者') + ' · ' + new Date().getFullYear();
+                updateBioCharCount();
+            } else if (field === 'about') {
+                profileData.about = value;
+                document.getElementById('previewAbout').textContent = value || '点击上方自我介绍，了解更多关于我的信息...';
+            } else if (field === 'github') {
+                profileData.socialGithub = value;
+                const link = document.getElementById('previewGithubLink');
+                link.href = value || '#';
+                link.classList.toggle('empty', !value);
+            } else if (field === 'email') {
+                profileData.socialEmail = value;
+                const link = document.getElementById('previewEmailLink');
+                link.href = value ? 'mailto:' + value : '#';
+                link.classList.toggle('empty', !value);
+            } else if (field === 'x') {
+                profileData.socialX = value;
+                const link = document.getElementById('previewXLink');
+                link.href = value ? 'https://twitter.com/' + value.replace('@','') : '#';
+                link.classList.toggle('empty', !value);
+            }
+        }
+
+        // 更新头像预览
+        function updatePreviewAvatar(avatar, name) {
+            const el = document.getElementById('previewAvatar');
+            const nameStr = name || profileData.name || '辉';
+
+            if (avatar) {
+                el.style.backgroundImage = 'url(' + avatar + ')';
+                el.textContent = '';
+            } else {
+                el.style.backgroundImage = '';
+                el.textContent = nameStr ? nameStr.charAt(0) : '辉';
+            }
+        }
+
+        // 更新字符计数
+        function updateBioCharCount() {
+            const bio = document.getElementById('profileBio');
+            const countEl = document.getElementById('bioCharCount');
+            if (bio && countEl) {
+                const len = bio.value.length;
+                countEl.textContent = len + '/50';
+                countEl.classList.remove('warn', 'error');
+                if (len >= 45) {
+                    countEl.classList.add('warn');
+                }
+                if (len >= 50) {
+                    countEl.classList.add('error');
+                }
+            }
+        }
+
+        // 首字母大写
+        function capitalize(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // 保存个人资料
+        async function saveProfile() {
+            const token = getToken();
+            if (!token) {
+                showError('请先登录');
+                return;
+            }
+
+            const name = document.getElementById('profileName').value.trim();
+            if (!name) {
+                showError('名字不能为空');
+                return;
+            }
+
+            const bio = document.getElementById('profileBio').value.trim();
+            if (bio.length > 50) {
+                showError('简介不能超过50字');
+                return;
+            }
+
+            const payload = {
+                name: name,
+                bio: bio,
+                about: document.getElementById('profileAbout').value.trim(),
+                avatar: document.getElementById('profileAvatar').value.trim(),
+                social: {
+                    github: document.getElementById('profileGithub').value.trim(),
+                    email: document.getElementById('profileEmail').value.trim(),
+                    x: document.getElementById('profileX').value.trim()
+                }
+            };
+
+            try {
+                const res = await fetch(API_BASE + '/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.code === 0) {
+                    alert('保存成功');
+                    loadProfile();  // 刷新页面
+                } else {
+                    showError(data.message || '保存失败');
+                }
+            } catch (err) {
+                showError('网���错误');
             }
         }
     </script>
