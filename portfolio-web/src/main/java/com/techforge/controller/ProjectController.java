@@ -13,7 +13,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -36,15 +40,44 @@ public class ProjectController {
     }
 
     /**
-     * 项目列表 (公开)
+     * 项目列表 (公开) - 批量查询优化
      */
     @GetMapping("/projects")
     public Result<List<Project>> getProjects() {
+        // 1. 查询所有项目
         List<Project> projects = projectRepository.findByStatusAndDeletedAtIsNullOrderBySortOrderAsc(ProjectStatus.PUBLISHED);
-        // 加载每个项目的关联技能
-        for (Project p : projects) {
-            p.setSkills(loadSkillsForProject(p.getId()));
+
+        if (projects.isEmpty()) {
+            return Result.success(projects);
         }
+
+        // 2. 收集项目 ID
+        List<Integer> projectIds = projects.stream().map(Project::getId).collect(Collectors.toList());
+
+        // 3. 批量查询项目-技能关联
+        List<ProjectSkill> allRelations = projectSkillRepository.findByProjectIds(projectIds);
+
+        // 4. 按项目 ID 分组
+        Map<Integer, List<ProjectSkill>> relationsByProject = allRelations.stream()
+                .collect(Collectors.groupingBy(ProjectSkill::getProjectId));
+
+        // 5. 收集所有技能 ID 并批量查询
+        Set<Integer> skillIds = allRelations.stream()
+                .map(ProjectSkill::getSkillId)
+                .collect(Collectors.toSet());
+        Map<Integer, Skill> skillMap = skillRepository.findAllById(skillIds).stream()
+                .collect(Collectors.toMap(Skill::getId, s -> s));
+
+        // 6. 组装到项目
+        for (Project p : projects) {
+            List<ProjectSkill> pss = relationsByProject.getOrDefault(p.getId(), Collections.emptyList());
+            List<Skill> skills = pss.stream()
+                    .map(ps -> skillMap.get(ps.getSkillId()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            p.setSkills(skills);
+        }
+
         return Result.success(projects);
     }
 
@@ -56,7 +89,13 @@ public class ProjectController {
         return projectRepository.findById(id)
                 .filter(p -> p.getDeletedAt() == null)
                 .map(p -> {
-                    p.setSkills(loadSkillsForProject(p.getId()));
+                    // 简化查询：单项目直接查询
+                    List<ProjectSkill> pss = projectSkillRepository.findByProjectId(id);
+                    if (!pss.isEmpty()) {
+                        List<Integer> sids = pss.stream().map(ProjectSkill::getSkillId).collect(Collectors.toList());
+                        List<Skill> skills = skillRepository.findAllById(sids);
+                        p.setSkills(skills);
+                    }
                     return Result.success(p);
                 })
                 .orElse(Result.error(404, "项目不存在"));

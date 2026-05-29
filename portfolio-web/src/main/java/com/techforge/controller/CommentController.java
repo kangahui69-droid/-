@@ -7,6 +7,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -79,6 +80,7 @@ public class CommentController {
      * 删除评论 (管理)
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public Result<?> deleteComment(@PathVariable Integer id) {
         return commentRepository.findById(id)
                 .map(comment -> {
