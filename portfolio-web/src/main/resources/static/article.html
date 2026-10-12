@@ -192,109 +192,6 @@
             color: inherit;
         }
 
-        /* ========== 目录（TOC） ========== */
-        .toc {
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            margin-bottom: 24px;
-        }
-
-        .toc-title {
-            font-size: 15px;
-            font-weight: 600;
-            padding: 14px 18px;
-            cursor: pointer;
-            list-style: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: var(--text-primary);
-        }
-
-        .toc-title::-webkit-details-marker { display: none; }
-        .toc-title::after {
-            content: '▸';
-            font-size: 12px;
-            color: var(--text-muted);
-            transition: transform 0.2s;
-        }
-
-        .toc[open] .toc-title::after {
-            transform: rotate(90deg);
-        }
-
-        .toc-nav {
-            padding: 0 18px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .toc-link {
-            display: block;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: var(--text-muted);
-            transition: all 0.15s;
-            border-left: 2px solid transparent;
-        }
-
-        .toc-link:hover {
-            color: var(--text-secondary);
-            background: rgba(56, 189, 248, 0.05);
-        }
-
-        .toc-link.active {
-            color: var(--accent);
-            border-left-color: var(--accent);
-            background: rgba(56, 189, 248, 0.08);
-            font-weight: 500;
-        }
-
-        .toc-link.toc-h1 { padding-left: 10px; font-weight: 600; }
-        .toc-link.toc-h2 { padding-left: 20px; }
-        .toc-link.toc-h3 { padding-left: 30px; font-size: 12px; }
-
-        /* 桌面端：侧边栏 */
-        @media (min-width: 1280px) {
-            .toc {
-                position: fixed;
-                left: calc(50% + 424px);
-                top: 100px;
-                width: 200px;
-                max-height: calc(100vh - 140px);
-                overflow-y: auto;
-                background: rgba(26, 35, 50, 0.92);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                box-shadow: 0 2px 12px var(--shadow);
-                z-index: 50;
-            }
-
-            .toc[open] {
-                padding-bottom: 8px;
-            }
-
-            .toc-title {
-                font-size: 14px;
-                padding: 12px 14px;
-                cursor: default;
-            }
-
-            .toc-title::after { display: none; }
-            .toc-nav { padding: 0 10px 8px; }
-            .toc-link { font-size: 12px; padding: 5px 8px; }
-            .toc-link.toc-h2 { padding-left: 16px; }
-            .toc-link.toc-h3 { padding-left: 24px; }
-        }
-
-        @media (max-width: 1279px) {
-            /* 移动端折叠，默认关闭 */
-            .toc { margin-top: 0; }
-        }
-
         /* ========== 评论区 ========== */
         .comments-section {
             margin-top: 48px;
@@ -451,12 +348,6 @@
     <main class="container">
         <a href="/articles.html" class="back-link">← 返回文章列表</a>
 
-        <!-- 目录：桌面端侧边栏 / 移动端折叠 -->
-        <details class="toc" id="toc">
-            <summary class="toc-title">📑 目录</summary>
-            <nav class="toc-nav" id="tocNav"></nav>
-        </details>
-
         <article id="articleContainer">
             <div class="loading">加载中...</div>
         </article>
@@ -483,7 +374,11 @@
         <p>© 2026 TechForge · 用技术创造价值</p>
     </footer>
 
+    <script src="/js/marked.min.js"></script>
+    <script src="/js/purify.min.js"></script>
     <script>
+        marked.setOptions({ gfm: true, breaks: true });
+
         // 获取文章ID
         const urlParams = new URLSearchParams(window.location.search);
         const articleId = urlParams.get('id');
@@ -514,7 +409,6 @@
         }
 
         // 渲染文章
-        let headingIndex = 0;
         function renderArticle(article) {
             const container = document.getElementById('articleContainer');
             const title = article.title || '';
@@ -522,14 +416,8 @@
             const views = article.views || 0;
             const createdAt = formatDate(article.createdAt);
 
-            // 简单处理Markdown内容，标题带 ID
-            headingIndex = 0;
-            const htmlContent = content
-                .replace(/^# (.*$)/gm, (_, text) => `<h1 id="h-${headingIndex++}">${text}</h1>`)
-                .replace(/^## (.*$)/gm, (_, text) => `<h2 id="h-${headingIndex++}">${text}</h2>`)
-                .replace(/^### (.*$)/gm, (_, text) => `<h3 id="h-${headingIndex++}">${text}</h3>`)
-                .replace(/\n\n/g, '</p><p>')
-                .replace(/`(.*?)`/g, '<code>$1</code>');
+            // Markdown 渲染 (GFM) + 净化
+            const htmlContent = DOMPurify.sanitize(marked.parse(content));
 
             container.innerHTML = `
                 <header class="article-header">
@@ -539,85 +427,11 @@
                         <span>👁 ${views} 阅读</span>
                     </div>
                 </header>
-                <div class="article-content">
-                    <p>${htmlContent}</p>
-                </div>
+                <div class="article-content">${htmlContent}</div>
             `;
 
             // 更新页面标题
             document.title = title + ' - TechForge';
-
-            // 生成目录
-            buildToc();
-        }
-
-        function buildToc() {
-            const content = document.querySelector('.article-content');
-            if (!content) return;
-
-            const headings = content.querySelectorAll('h1, h2, h3');
-            const tocNav = document.getElementById('tocNav');
-            const toc = document.getElementById('toc');
-
-            if (headings.length === 0) {
-                toc.style.display = 'none';
-                return;
-            }
-            toc.style.display = '';
-
-            let html = '';
-            headings.forEach(h => {
-                const tag = h.tagName.toLowerCase();
-                const cls = 'toc-' + tag;
-                html += `<a class="toc-link ${cls}" href="#${h.id}">${h.textContent}</a>`;
-            });
-            tocNav.innerHTML = html;
-
-            // 桌面端默认展开
-            if (window.innerWidth >= 1280) {
-                toc.setAttribute('open', '');
-            }
-
-            // TOC 链接点击：平滑滚动
-            tocNav.querySelectorAll('.toc-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        // 移动端点击后关闭目录
-                        if (window.innerWidth < 1200) {
-                            toc.removeAttribute('open');
-                        }
-                    }
-                });
-            });
-
-            // Scroll spy：高亮当前标题
-            setupScrollSpy(headings);
-        }
-
-        function setupScrollSpy(headings) {
-            const tocLinks = document.querySelectorAll('.toc-link');
-            if (headings.length === 0 || tocLinks.length === 0) return;
-
-            const observer = new IntersectionObserver(entries => {
-                let activeId = null;
-                entries.forEach(e => {
-                    if (e.isIntersecting) activeId = e.target.id;
-                });
-
-                if (activeId) {
-                    tocLinks.forEach(link => {
-                        link.classList.toggle('active', link.getAttribute('href') === '#' + activeId);
-                    });
-                }
-            }, {
-                rootMargin: '-80px 0px -70% 0px',
-                threshold: 0
-            });
-
-            headings.forEach(h => observer.observe(h));
         }
 
         // 提交评论

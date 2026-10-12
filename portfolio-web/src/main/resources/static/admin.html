@@ -573,6 +573,60 @@
             display: flex;
             gap: 12px;
         }
+        /* Markdown 编辑器 + 实时预览 */
+        .markdown-editor {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 900px) {
+            .markdown-editor { grid-template-columns: 1fr; }
+        }
+        .markdown-editor .form-textarea {
+            min-height: 380px;
+            margin: 0;
+        }
+        .markdown-preview {
+            min-height: 380px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            overflow-y: auto;
+            line-height: 1.7;
+        }
+        .markdown-preview h1 { font-size: 22px; margin: 12px 0 8px; }
+        .markdown-preview h2 { font-size: 18px; margin: 12px 0 8px; }
+        .markdown-preview h3 { font-size: 16px; margin: 10px 0 6px; }
+        .markdown-preview p { margin: 8px 0; }
+        .markdown-preview ul, .markdown-preview ol { padding-left: 22px; margin: 8px 0; }
+        .markdown-preview pre {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .markdown-preview code {
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.9em;
+        }
+        .markdown-preview pre code { background: none; padding: 0; }
+        .markdown-preview blockquote {
+            border-left: 3px solid var(--accent);
+            margin: 8px 0;
+            padding-left: 12px;
+            color: var(--text-secondary);
+        }
+        .markdown-preview table { border-collapse: collapse; margin: 10px 0; }
+        .markdown-preview th, .markdown-preview td {
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+        }
     </style>
 </head>
 <body>
@@ -622,7 +676,11 @@
         </main>
     </div>
 
+    <script src="/js/marked.min.js"></script>
+    <script src="/js/purify.min.js"></script>
     <script>
+        marked.setOptions({ gfm: true, breaks: true });
+
         const API_BASE = '/api';
         let currentPage = 'articles';
         let editingArticleId = null;
@@ -818,7 +876,10 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">内容 (Markdown)</label>
-                        <textarea id="articleContent" class="form-textarea" placeholder="文章内容，支持 Markdown 语法">${escapeHtml(article?.content || '')}</textarea>
+                        <div class="markdown-editor">
+                            <textarea id="articleContent" class="form-textarea" placeholder="文章内容，支持 Markdown 语法" oninput="updateArticlePreview()">${escapeHtml(article?.content || '')}</textarea>
+                            <div id="articlePreview" class="markdown-preview"></div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button class="btn btn-primary" onclick="saveArticle()">保存</button>
@@ -826,6 +887,15 @@
                     </div>
                 </div>
             `;
+            updateArticlePreview();
+        }
+
+        // Markdown 预览 (与文章详情页使用同一渲染器)
+        function updateArticlePreview() {
+            const src = document.getElementById('articleContent');
+            const out = document.getElementById('articlePreview');
+            if (!src || !out || !window.marked || !window.DOMPurify) return;
+            out.innerHTML = DOMPurify.sanitize(marked.parse(src.value || ''));
         }
 
         // 保存文章
