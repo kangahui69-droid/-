@@ -21,7 +21,7 @@
 | 数据库 | MySQL | 8.x |
 | ORM | Spring Data JPA | - |
 | 认证 | JWT | - |
-| AI | Minimax API | - |
+| AI | DeepSeek API | - |
 | 前端 | 原生 HTML/CSS/JS | - |
 | 部署 (可选) | Railway / Render | - |
 
@@ -403,8 +403,8 @@ DB_PASSWORD=your_password
 # JWT
 JWT_SECRET=your_jwt_secret_min_256_bits
 
-# Minimax AI
-MINIMAX_API_KEY=your_api_key
+# DeepSeek AI
+DEEPSEEK_API_KEY=your_api_key
 ```
 
 ---

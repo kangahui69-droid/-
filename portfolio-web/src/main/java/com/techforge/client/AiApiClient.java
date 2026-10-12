@@ -9,18 +9,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * AI API 客户端 - 负责 MiniMax API 调用、fallback 逻辑、响应解析
+ * AI API 客户端 - 负责 DeepSeek API 调用、fallback 逻辑、响应解析
  */
 @Component
 public class AiApiClient {
 
-    @Value("${ai.minimax.key:}")
+    @Value("${deepseek.api-key:}")
     private String apiKey;
 
-    @Value("${minimax.model:abab6.5s-chat}")
+    @Value("${deepseek.model:deepseek-chat}")
     private String model;
 
-    @Value("${minimax.api-url:https://api.minimax.chat/v1/text/chatcompletion_pro}")
+    @Value("${deepseek.api-url:https://api.deepseek.com/chat/completions}")
     private String apiUrl;
 
     private final RestTemplate restTemplate;

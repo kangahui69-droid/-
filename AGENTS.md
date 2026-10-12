@@ -14,7 +14,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ```cmd
 cd portfolio-web
-set DB_PASSWORD=kang2005.
+set DB_PASSWORD=你的数据库密码
 .\mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
@@ -40,7 +40,7 @@ java -jar target/techforge-backend-1.0.0-SNAPSHOT.jar --spring.profiles=local
 |------|-----|
 | JDK | 17 |
 | 数据库 | MySQL 8.x (localhost:3306/techforge) |
-| 用户/密码 | root / kang2005. |
+| 用户/密码 | root / <你的数据库密码> |
 
 ## 架构
 
@@ -71,7 +71,7 @@ com.techforge/
 
 ### AI 对话
 
-- MiniMax API (环境变量 `MINIMAX_API_KEY`)
+- DeepSeek API (环境变量 `DEEPSEEK_API_KEY`)
 - RAG: 从 Project 表构建上下文
 
 ## 前端静态文件
