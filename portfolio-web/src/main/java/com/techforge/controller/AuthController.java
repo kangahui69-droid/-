@@ -5,7 +5,6 @@ import com.techforge.dto.Result;
 import com.techforge.entity.User;
 import com.techforge.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -77,20 +76,6 @@ public class AuthController {
         userRepository.save(user);
 
         return Result.success("管理员创建成功");
-    }
-
-    /**
-     * 重置密码 (调试用)
-     */
-    @PostMapping("/reset-password")
-    public Result<?> resetPassword(@RequestBody LoginRequest request) {
-        return userRepository.findByUsername(request.getUsername())
-                .map(user -> {
-                    user.setPassword(passwordEncoder.encode(request.getPassword()));
-                    userRepository.save(user);
-                    return Result.success("密码已重置");
-                })
-                .orElse(Result.error(404, "用户不存在"));
     }
 
     public static class LoginRequest {

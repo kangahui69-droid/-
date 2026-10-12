@@ -28,10 +28,11 @@ buildNumber.properties
 Thumbs.db
 
 # Sensitive local config
-src/main/resources/application-local.yml
+**/application-local.yml
 CLAUDE.md
 .claude/
 PLAN.md
+.mcp.json
 
 # Logs
 *.log
