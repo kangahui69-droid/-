@@ -81,6 +81,7 @@ public class ArticleController {
         article.setExcerpt(request.getExcerpt());
         article.setCoverImage(request.getCoverImage());
         article.setStatus(request.getStatus() != null ? request.getStatus() : ArticleStatus.DRAFT);
+        article.setCreatedAt(request.getCreatedAt());
 
         articleRepository.save(article);
         return Result.success("文章创建成功");
@@ -97,6 +98,7 @@ public class ArticleController {
                     if (request.getExcerpt() != null) article.setExcerpt(request.getExcerpt());
                     if (request.getCoverImage() != null) article.setCoverImage(request.getCoverImage());
                     if (request.getStatus() != null) article.setStatus(request.getStatus());
+                    if (request.getCreatedAt() != null) article.setCreatedAt(request.getCreatedAt());
 
                     articleRepository.save(article);
                     return Result.success("文章更新成功");
@@ -109,11 +111,26 @@ public class ArticleController {
     public Result<?> deleteArticle(@PathVariable Integer id) {
         return articleRepository.findById(id)
                 .map(article -> {
+                    // 软删除时释放 slug，使其可被新文章复用（slug 全局唯一约束）
+                    if (article.getDeletedAt() == null) {
+                        article.setSlug(releaseSlug(article.getSlug(), article.getId()));
+                    }
                     article.setDeletedAt(LocalDateTime.now());
                     articleRepository.save(article);
                     return Result.success("文章删除成功");
                 })
                 .orElse(Result.error(404, "文章不存在"));
+    }
+
+    private static final int SLUG_MAX_LENGTH = 200;
+
+    private String releaseSlug(String slug, Integer id) {
+        String suffix = "-deleted-" + id;
+        String base = slug != null ? slug : "";
+        if (base.length() + suffix.length() > SLUG_MAX_LENGTH) {
+            base = base.substring(0, SLUG_MAX_LENGTH - suffix.length());
+        }
+        return base + suffix;
     }
 
     @GetMapping("/admin/articles/all")
@@ -122,7 +139,7 @@ public class ArticleController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<Article> articles = articleRepository.findAll(
+        Page<Article> articles = articleRepository.findByDeletedAtIsNull(
                 PageRequest.of(page - 1, size, Sort.by("createdAt").descending())
         );
 
@@ -168,6 +185,7 @@ public class ArticleController {
         private String excerpt;
         private String coverImage;
         private ArticleStatus status;
+        private LocalDateTime createdAt;
 
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
@@ -181,5 +199,7 @@ public class ArticleController {
         public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
         public ArticleStatus getStatus() { return status; }
         public void setStatus(ArticleStatus status) { this.status = status; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
+        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     }
 }

@@ -26,4 +26,9 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
      * 根据Slug查询 (排除软删除)
      */
     Optional<Article> findBySlugAndDeletedAtIsNull(String slug);
+
+    /**
+     * 查询全部未删除文章 (后台管理用)
+     */
+    Page<Article> findByDeletedAtIsNull(Pageable pageable);
 }

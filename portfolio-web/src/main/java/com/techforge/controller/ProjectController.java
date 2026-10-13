@@ -8,12 +8,17 @@ import com.techforge.entity.Skill;
 import com.techforge.repository.ProjectRepository;
 import com.techforge.repository.ProjectSkillRepository;
 import com.techforge.repository.SkillRepository;
+import com.techforge.service.FileStorageService;
+import com.techforge.util.ImageTypeDetector;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,16 +32,21 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class ProjectController {
 
+    private static final long MAX_COVER_SIZE = 5 * 1024 * 1024;
+
     private final ProjectRepository projectRepository;
     private final ProjectSkillRepository projectSkillRepository;
     private final SkillRepository skillRepository;
+    private final FileStorageService fileStorageService;
 
     public ProjectController(ProjectRepository projectRepository,
                         ProjectSkillRepository projectSkillRepository,
-                        SkillRepository skillRepository) {
+                        SkillRepository skillRepository,
+                        FileStorageService fileStorageService) {
         this.projectRepository = projectRepository;
         this.projectSkillRepository = projectSkillRepository;
         this.skillRepository = skillRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -110,6 +120,15 @@ public class ProjectController {
 
     // ========== 管理接口 ==========
 
+    /**
+     * 项目列表 (后台管理, 含草稿, 排除已删除)
+     */
+    @GetMapping("/admin/projects/all")
+    @PreAuthorize("isAuthenticated()")
+    public Result<List<Project>> getAllProjects() {
+        return Result.success(projectRepository.findByDeletedAtIsNullOrderBySortOrderAsc());
+    }
+
     @PostMapping("/projects")
     @PreAuthorize("isAuthenticated()")
     public Result<?> createProject(@RequestBody ProjectRequest request) {
@@ -123,6 +142,7 @@ public class ProjectController {
         project.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
         project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
         project.setProjectType(request.getProjectType());
+        project.setCreatedAt(request.getCreatedAt());
         // 功能模块直接存储（无需JSON校验）
         if (request.getFeatures() != null) {
             project.setFeatures(request.getFeatures());
@@ -153,7 +173,13 @@ public class ProjectController {
                     if (request.getName() != null) project.setName(request.getName());
                     if (request.getDescription() != null) project.setDescription(request.getDescription());
                     if (request.getTechStack() != null) project.setTechStack(request.getTechStack());
-                    if (request.getCoverImage() != null) project.setCoverImage(request.getCoverImage());
+                    if (request.getCoverImage() != null) {
+                        String oldCover = project.getCoverImage();
+                        if (oldCover != null && !oldCover.equals(request.getCoverImage())) {
+                            fileStorageService.delete(oldCover);
+                        }
+                        project.setCoverImage(request.getCoverImage());
+                    }
                     if (request.getDemoUrl() != null) project.setDemoUrl(request.getDemoUrl());
                     if (request.getGithubUrl() != null) project.setGithubUrl(request.getGithubUrl());
                     if (request.getSortOrder() != null) project.setSortOrder(request.getSortOrder());
@@ -168,6 +194,9 @@ public class ProjectController {
                     }
                     if (request.getSummary() != null) {
                         project.setSummary(request.getSummary());
+                    }
+                    if (request.getCreatedAt() != null) {
+                        project.setCreatedAt(request.getCreatedAt());
                     }
 
                     projectRepository.save(project);
@@ -216,6 +245,55 @@ public class ProjectController {
                 .orElse(Result.error(404, "项目不存在"));
     }
 
+    // ========== 封面 ==========
+
+    /**
+     * 上传项目封面（JPG/PNG/WEBP，返回 /uploads/cover-xxx 地址，由前端存入表单）
+     */
+    @PostMapping("/projects/cover")
+    @PreAuthorize("isAuthenticated()")
+    public Result<?> uploadCover(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return Result.error(400, "请选择要上传的图片");
+        }
+        if (file.getSize() > MAX_COVER_SIZE) {
+            return Result.error(400, "图片不能超过 5MB");
+        }
+        String original = file.getOriginalFilename();
+        if (original == null || !original.toLowerCase().matches(".*\\.(jpg|jpeg|png|webp)$")) {
+            return Result.error(400, "只支持 JPG/PNG/WEBP 格式的图片");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !(contentType.equalsIgnoreCase("image/jpeg")
+                || contentType.equalsIgnoreCase("image/png")
+                || contentType.equalsIgnoreCase("image/webp"))) {
+            return Result.error(400, "只支持 JPG/PNG/WEBP 格式的图片");
+        }
+
+        byte[] content;
+        try {
+            content = file.getBytes();
+        } catch (IOException e) {
+            return Result.error(500, "读取文件失败");
+        }
+
+        String ext = ImageTypeDetector.detect(content);
+        if (ext == null) {
+            return Result.error(400, "图片内容不是有效的 JPG/PNG/WEBP");
+        }
+
+        String storedName;
+        try {
+            storedName = fileStorageService.store(content, "cover-" + System.currentTimeMillis() + "." + ext);
+        } catch (IOException e) {
+            return Result.error(500, "保存图片失败");
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("coverImage", fileStorageService.toUrl(storedName));
+        return Result.success(data);
+    }
+
     public static class ProjectRequest {
         private String name;
         private String description;
@@ -229,6 +307,7 @@ public class ProjectController {
         private String features;
         private String structure;
         private String summary;
+        private LocalDateTime createdAt;
         private List<Integer> skillIds;
 
         public String getName() { return name; }
@@ -255,6 +334,8 @@ public class ProjectController {
         public void setStructure(String structure) { this.structure = structure; }
         public String getSummary() { return summary; }
         public void setSummary(String summary) { this.summary = summary; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
+        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
         public List<Integer> getSkillIds() { return skillIds; }
         public void setSkillIds(List<Integer> skillIds) { this.skillIds = skillIds; }
     }

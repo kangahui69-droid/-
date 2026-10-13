@@ -474,7 +474,7 @@
             height: 60px;
             border-radius: 12px;
             margin-top: 8px;
-            object-fit: cover;
+            object-fit: contain;
             background: var(--bg-primary);
         }
 
@@ -501,8 +501,9 @@
             font-size: 32px;
             font-weight: 600;
             color: #fff;
-            background-size: cover;
+            background-size: contain;
             background-position: center;
+            background-repeat: no-repeat;
         }
 
         .preview-hero-name {
@@ -871,6 +872,14 @@
                         <input type="text" id="articleExcerpt" class="form-input" value="${escapeHtml(article?.excerpt || '')}" placeholder="文章摘要">
                     </div>
                     <div class="form-group">
+                        <label class="form-label">发布时间</label>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <input type="date" id="articleCreatedDate" class="form-input" style="flex:2;min-width:160px;" value="${article && article.createdAt ? article.createdAt.slice(0, 10) : ''}">
+                            <input type="time" id="articleCreatedTime" class="form-input" style="flex:1;min-width:120px;" value="${article && article.createdAt ? article.createdAt.slice(11, 16) : ''}">
+                        </div>
+                        <div style="margin-top:6px;font-size:12px;color:#6b7280;">点选日期和时间；时间可留空（默认 00:00）。都留空则使用当前时间。</div>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">封面图 URL</label>
                         <input type="text" id="articleCover" class="form-input" value="${escapeHtml(article?.coverImage || '')}" placeholder="图片地址">
                     </div>
@@ -913,6 +922,11 @@
             }
 
             const payload = { title, slug, content, excerpt, coverImage, status };
+            const createdAtDate = document.getElementById('articleCreatedDate').value;
+            const createdAtTime = document.getElementById('articleCreatedTime').value;
+            if (createdAtDate) {
+                payload.createdAt = createdAtDate + 'T' + (createdAtTime || '00:00') + ':00';
+            }
 
             try {
                 const url = editingArticleId ? API_BASE + '/articles/' + editingArticleId : API_BASE + '/articles';
@@ -1154,7 +1168,10 @@
             await loadAllSkillsForProject();
 
             try {
-                const res = await fetch('/api/projects');
+                // 使用管理端接口，获取所有项目（包括草稿）
+                const res = await fetch(API_BASE + '/admin/projects/all', {
+                    headers: getHeaders()
+                });
 
                 if (!res.ok) {
                     content.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>请检查网络连接</p></div>';
@@ -1204,6 +1221,8 @@
             const githubVal = project ? escapeHtml(project.githubUrl || '') : '';
             const sortVal = project ? (project.sortOrder || 0) : 0;
             const statusVal = project ? project.status : 'DRAFT';
+            const createdAtDate = project && project.createdAt ? project.createdAt.slice(0, 10) : '';
+            const createdAtTime = project && project.createdAt ? project.createdAt.slice(11, 16) : '';
 
             const html = `
 <div class="form-group">
@@ -1216,7 +1235,7 @@
 </div>
 <div class="form-group">
     <label class="form-label">技术栈</label>
-    <input type="text" id="projectTech" class="form-input" value="${techVal}" placeholder="用逗号分隔">
+    <textarea id="projectTech" class="form-textarea" rows="3" placeholder="用一段话描述项目的技术栈">${techVal}</textarea>
 </div>
 <div class="form-group">
     <label class="form-label">关联技能</label>
@@ -1244,16 +1263,30 @@
     <textarea id="projectSummary" class="form-textarea" rows="3">${summVal}</textarea>
 </div>
 <div class="form-group">
-    <label class="form-label">封面图 URL</label>
-    <input type="text" id="projectCover" class="form-input" value="${coverVal}">
+    <label class="form-label">封面图</label>
+    <input type="hidden" id="projectCover" value="${coverVal}">
+    <img id="projectCoverPreview" src="${coverVal}" style="display:${coverVal ? 'block' : 'none'};max-width:240px;border-radius:8px;margin-bottom:8px;" alt="封面预览">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="file" id="projectCoverFile" accept="image/jpeg,image/png,image/webp" class="form-input" style="flex:1;min-width:200px;">
+        <button type="button" class="btn btn-primary" onclick="uploadProjectCover()">上传</button>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:#6b7280;">支持 JPG/PNG/WEBP，大小不超过 5MB</div>
 </div>
 <div class="form-group">
-    <label class="form-label">Demo URL</label>
-    <input type="text" id="projectDemo" class="form-input" value="${demoVal}">
+    <label class="form-label">Demo URL（可选）</label>
+    <input type="text" id="projectDemo" class="form-input" value="${demoVal}" placeholder="没有可留空">
 </div>
 <div class="form-group">
     <label class="form-label">GitHub URL</label>
     <input type="text" id="projectGithub" class="form-input" value="${githubVal}">
+</div>
+<div class="form-group">
+    <label class="form-label">创建时间</label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input type="date" id="projectCreatedDate" class="form-input" style="flex:2;min-width:160px;" value="${createdAtDate}">
+        <input type="time" id="projectCreatedTime" class="form-input" style="flex:1;min-width:120px;" value="${createdAtTime}">
+    </div>
+    <div style="margin-top:6px;font-size:12px;color:#6b7280;">点选日期和时间；时间可留空（默认 00:00）。都留空则使用当前时间。</div>
 </div>
 <div class="form-group">
     <label class="form-label">排序</label>
@@ -1304,6 +1337,51 @@
             }).join('');
         }
 
+        // 上传项目封面
+        async function uploadProjectCover() {
+            const token = getToken();
+            if (!token) {
+                showError('请先登录');
+                return;
+            }
+            const input = document.getElementById('projectCoverFile');
+            if (!input || !input.files || input.files.length === 0) {
+                showError('请先选择图片');
+                return;
+            }
+            const file = input.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showError('图片不能超过 5MB');
+                return;
+            }
+
+            const form = new FormData();
+            form.append('file', file);
+
+            try {
+                const res = await fetch(API_BASE + '/projects/cover', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: form
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    const url = (data.data && data.data.coverImage) || '';
+                    document.getElementById('projectCover').value = url;
+                    const img = document.getElementById('projectCoverPreview');
+                    img.src = url;
+                    img.style.display = url ? 'block' : 'none';
+                    input.value = '';
+                } else {
+                    showError(data.message || '上传失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
         // 保存项目
         async function saveProject() {
             const name = document.getElementById('projectName').value.trim();
@@ -1338,6 +1416,12 @@
 
             projectData.sortOrder = parseInt(document.getElementById('projectSort').value) || 0;
             projectData.status = document.getElementById('projectStatus').value;
+
+            const projectCreatedDate = document.getElementById('projectCreatedDate').value;
+            const projectCreatedTime = document.getElementById('projectCreatedTime').value;
+            if (projectCreatedDate) {
+                projectData.createdAt = projectCreatedDate + 'T' + (projectCreatedTime || '00:00') + ':00';
+            }
 
             // 收集关联技能ID
             const skillCheckboxes = document.querySelectorAll('.skill-checkbox:checked');
@@ -1620,8 +1704,7 @@
                         bio: '',
                         about: '',
                         socialGithub: '',
-                        socialEmail: '',
-                        socialX: ''
+                        socialEmail: ''
                     };
                     renderProfilePage(profileData);
                 }
@@ -1633,6 +1716,10 @@
         // 渲染个人资料页面
         function renderProfilePage(data) {
             const content = document.getElementById('contentArea');
+            // GET /api/profile 把社交字段放在 social 对象里，这里归一化，避免输入框留空后保存覆盖掉原值
+            data.socialGithub = data.socialGithub || (data.social && data.social.github) || '';
+            data.socialEmail = data.socialEmail || (data.social && data.social.email) || '';
+            const resumeAtText = formatResumeAt(data.resumeAt);
 
             content.innerHTML = `
                 <div class="profile-page">
@@ -1641,9 +1728,15 @@
                         <h3 style="margin-bottom:20px;">个人资料编辑</h3>
 
                         <div class="profile-form-group">
-                            <label class="form-label">头像 URL</label>
-                            <input type="text" id="profileAvatar" class="form-input" value="${escapeHtml(data.avatar || '')}" placeholder="头像图片链接" oninput="onProfileInput('avatar')">
+                            <label class="form-label">头像</label>
+                            <input type="hidden" id="profileAvatar" value="${escapeHtml(data.avatar || '')}">
                             <img id="avatarPreviewImg" src="${escapeHtml(data.avatar || '')}" class="avatar-preview-img" style="display: ${data.avatar ? 'block' : 'none'}" alt="头像预览">
+                            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+                                <input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp" class="form-input" style="flex:1;min-width:200px;">
+                                <button class="btn btn-primary" onclick="uploadAvatar()">上传</button>
+                                <button class="btn btn-secondary" id="avatarDeleteBtn" onclick="deleteAvatar()" ${data.avatar ? '' : 'disabled'}>删除</button>
+                            </div>
+                            <div style="margin-top:8px;font-size:12px;color:#6b7280;">支持 JPG/PNG/WEBP，大小不超过 2MB</div>
                         </div>
 
                         <div class="profile-form-group">
@@ -1673,8 +1766,18 @@
                         </div>
 
                         <div class="profile-form-group">
-                            <label class="form-label">X (Twitter)</label>
-                            <input type="text" id="profileX" class="form-input" value="${escapeHtml(data.socialX || '')}" placeholder="@username" oninput="onProfileInput('x')">
+                            <label class="form-label">简历（PDF）</label>
+                            <div id="resumeCurrent" style="margin-bottom:10px;font-size:13px;color:#9aa4b2;">
+                                ${data.resumeName
+                                    ? '当前：' + escapeHtml(data.resumeName) + (resumeAtText ? '（' + resumeAtText + '）' : '')
+                                    : '暂未上传'}
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                                <input type="file" id="resumeFileInput" accept="application/pdf,.pdf" class="form-input" style="flex:1;min-width:200px;">
+                                <button class="btn btn-primary" onclick="uploadResume()">上传</button>
+                                <button class="btn btn-secondary" id="resumeDeleteBtn" onclick="deleteResume()" ${data.resumeName ? '' : 'disabled'}>删除</button>
+                            </div>
+                            <div style="margin-top:8px;font-size:12px;color:#6b7280;">仅支持 PDF 格式，大小不超过 10MB</div>
                         </div>
 
                         <div class="profile-save-area">
@@ -1694,7 +1797,6 @@
                             <div class="preview-hero-links">
                                 <a href="${data.socialGithub || '#'}" id="previewGithubLink" class="${data.socialGithub ? '' : 'empty'}">GitHub</a>
                                 <a href="${data.socialEmail ? 'mailto:' + data.socialEmail : '#'}" id="previewEmailLink" class="${data.socialEmail ? '' : 'empty'}">邮箱</a>
-                                <a href="${data.socialX ? 'https://twitter.com/' + data.socialX.replace('@','') : '#'}" id="previewXLink" class="${data.socialX ? '' : 'empty'}">X</a>
                             </div>
                         </div>
                     </div>
@@ -1740,11 +1842,6 @@
                 profileData.socialEmail = value;
                 const link = document.getElementById('previewEmailLink');
                 link.href = value ? 'mailto:' + value : '#';
-                link.classList.toggle('empty', !value);
-            } else if (field === 'x') {
-                profileData.socialX = value;
-                const link = document.getElementById('previewXLink');
-                link.href = value ? 'https://twitter.com/' + value.replace('@','') : '#';
                 link.classList.toggle('empty', !value);
             }
         }
@@ -1813,8 +1910,7 @@
                 avatar: document.getElementById('profileAvatar').value.trim(),
                 social: {
                     github: document.getElementById('profileGithub').value.trim(),
-                    email: document.getElementById('profileEmail').value.trim(),
-                    x: document.getElementById('profileX').value.trim()
+                    email: document.getElementById('profileEmail').value.trim()
                 }
             };
 
@@ -1836,7 +1932,178 @@
                     showError(data.message || '保存失败');
                 }
             } catch (err) {
-                showError('网���错误');
+                showError('网络错误');
+            }
+        }
+
+        // 简历上传时间格式化（兼容 ISO 字符串与数组形式）
+        function formatResumeAt(value) {
+            if (!value) return '';
+            let s;
+            if (Array.isArray(value)) {
+                const [y, mo, d, h = 0, mi = 0] = value;
+                s = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')} ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+            } else {
+                s = String(value).replace('T', ' ').slice(0, 16);
+            }
+            return s;
+        }
+
+        // 上传简历
+        async function uploadResume() {
+            const token = getToken();
+            if (!token) {
+                showError('请先登录');
+                return;
+            }
+            const input = document.getElementById('resumeFileInput');
+            if (!input || !input.files || input.files.length === 0) {
+                showError('请先选择 PDF 文件');
+                return;
+            }
+            const file = input.files[0];
+            if (file.size > 10 * 1024 * 1024) {
+                showError('文件不能超过 10MB');
+                return;
+            }
+
+            const form = new FormData();
+            form.append('file', file);
+
+            try {
+                const res = await fetch(API_BASE + '/profile/resume', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: form
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    alert('简历上传成功');
+                    loadProfile();
+                } else {
+                    showError(data.message || '上传失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 删除简历
+        async function deleteResume() {
+            const token = getToken();
+            if (!token) {
+                showError('请先登录');
+                return;
+            }
+            if (!confirm('确定要删除当前简历吗？')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE + '/profile/resume', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    alert('简历已删除');
+                    loadProfile();
+                } else {
+                    showError(data.message || '删除失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 上传头像
+        async function uploadAvatar() {
+            const token = getToken();
+            if (!token) {
+                showError('请先登录');
+                return;
+            }
+            const input = document.getElementById('avatarFileInput');
+            if (!input || !input.files || input.files.length === 0) {
+                showError('请先选择图片');
+                return;
+            }
+            const file = input.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                showError('图片不能超过 2MB');
+                return;
+            }
+
+            const form = new FormData();
+            form.append('file', file);
+
+            try {
+                const res = await fetch(API_BASE + '/profile/avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: form
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    const url = (data.data && data.data.avatar) || '';
+                    document.getElementById('profileAvatar').value = url;
+                    const img = document.getElementById('avatarPreviewImg');
+                    img.src = url;
+                    img.style.display = url ? 'block' : 'none';
+                    profileData.avatar = url;
+                    updatePreviewAvatar(url, profileData.name);
+                    const delBtn = document.getElementById('avatarDeleteBtn');
+                    if (delBtn) delBtn.disabled = false;
+                    input.value = '';
+                    alert('头像上传成功');
+                } else {
+                    showError(data.message || '上传失败');
+                }
+            } catch (err) {
+                showError('网络错误');
+            }
+        }
+
+        // 删除头像
+        async function deleteAvatar() {
+            const token = getToken();
+            if (!token) {
+                showError('请先登录');
+                return;
+            }
+            if (!confirm('确定要删除当前头像吗？')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE + '/profile/avatar', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const data = await res.json();
+                if (data.code === 0) {
+                    document.getElementById('profileAvatar').value = '';
+                    const img = document.getElementById('avatarPreviewImg');
+                    img.src = '';
+                    img.style.display = 'none';
+                    profileData.avatar = '';
+                    updatePreviewAvatar('', profileData.name);
+                    const delBtn = document.getElementById('avatarDeleteBtn');
+                    if (delBtn) delBtn.disabled = true;
+                    alert('头像已删除');
+                } else {
+                    showError(data.message || '删除失败');
+                }
+            } catch (err) {
+                showError('网络错误');
             }
         }
     </script>

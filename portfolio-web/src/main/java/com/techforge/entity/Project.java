@@ -21,7 +21,7 @@ public class Project {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "tech_stack", length = 300)
+    @Column(name = "tech_stack", columnDefinition = "TEXT")
     private String techStack;
 
     @Column(name = "cover_image")
@@ -62,7 +62,7 @@ public class Project {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 

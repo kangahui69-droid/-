@@ -47,12 +47,14 @@ public class SecurityConfig {
                                 "/article.html",
                                 "/projects.html",
                                 "/project.html",
+                                "/skills.html",
                                 "/favicon.ico",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
                                 "/api/auth/**",
                                 "/api/profile",
+                                "/api/profile/resume",
                                 "/api/articles/**",
                                 "/api/projects/**",
                                 "/api/skills",
@@ -60,7 +62,8 @@ public class SecurityConfig {
                                 "/api/chat",
                                 "/api/comments",
                                 "/public/**",
-                                "/uploads/**"
+                                "/uploads/**",
+                                "/error"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

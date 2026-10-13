@@ -40,3 +40,6 @@ PLAN.md
 # Build
 out/
 bin/
+
+# Uploaded files (resume etc.)
+uploads/

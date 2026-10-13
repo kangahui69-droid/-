@@ -99,6 +99,9 @@
             height: 80px;
             border-radius: 20px;
             background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -690,9 +693,9 @@
                 参与 RISC-V 物联网竞赛方案设计与实现，拥有多个从 0 到 1 的项目经验。
             </p>
             <div class="hero-links">
-                <a href="#articles" class="link-btn">了解更多 →</a>
-                <a href="#" class="link-btn" id="heroGithubLink">GitHub</a>
-                <a href="#" class="link-btn" id="heroEmailLink">联系</a>
+                <a href="#" class="link-btn" id="heroGithubLink" target="_blank" rel="noopener">GitHub</a>
+                <a href="#" class="link-btn" id="heroEmailLink">邮箱</a>
+                <a href="/api/profile/resume" class="link-btn" id="heroResumeLink" target="_blank" rel="noopener" style="display:none">简历</a>
             </div>
             <div class="hero-stats">
                 <div class="hero-stat">
@@ -985,15 +988,68 @@ function renderProfile(profile) {
         githubLink.style.display = 'none';
     }
 
-    // 联系链接（邮箱）
+    // 邮箱链接（点击复制邮箱地址）
     const emailLink = document.getElementById('heroEmailLink');
     const email = profile.socialEmail || (profile.social && profile.social.email);
     if (email) {
-        emailLink.href = 'mailto:' + email;
         emailLink.style.display = '';
+        emailLink.dataset.email = email;
+        emailLink.onclick = async (e) => {
+            e.preventDefault();
+            try {
+                await copyText(email);
+                showCopyFeedback(emailLink);
+            } catch {
+                // 复制失败则退回邮件客户端
+                window.location.href = 'mailto:' + email;
+            }
+        };
     } else {
         emailLink.style.display = 'none';
     }
+
+    // 简历按钮（有简历时才显示）
+    const resumeLink = document.getElementById('heroResumeLink');
+    if (profile.resumeName) {
+        resumeLink.style.display = '';
+    } else {
+        resumeLink.style.display = 'none';
+    }
+}
+
+// 复制文本到剪贴板（兼容非 HTTPS 环境与旧浏览器）
+function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise((resolve, reject) => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+        } catch (err) {
+            reject(err);
+        } finally {
+            document.body.removeChild(ta);
+        }
+    });
+}
+
+// 复制成功后的短暂反馈
+function showCopyFeedback(el) {
+    if (el.dataset.copied) return;
+    const original = el.textContent;
+    el.dataset.copied = '1';
+    el.textContent = '已复制 ✓';
+    setTimeout(() => {
+        el.textContent = original;
+        delete el.dataset.copied;
+    }, 1600);
 }
 
 // AI 对话功能
@@ -1150,7 +1206,7 @@ function initChat() {
                         <h3 class="card-title">${project.name}</h3>
                         <p class="card-desc">${project.description ? (project.description.length > 50 ? project.description.substring(0, 50) + '...' : project.description) : ''}</p>
                         <div class="card-tags">
-                            ${project.techStack ? project.techStack.split(',').slice(0, 3).map(t => `<span class="tag">${t.trim()}</span>`).join('') : ''}
+                            ${project.skills && project.skills.length > 0 ? project.skills.slice(0, 3).map(s => `<span class="tag">${s.name}</span>`).join('') : ''}
                         </div>
                     `;
                     grid.appendChild(card);

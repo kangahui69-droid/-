@@ -29,6 +29,15 @@ public class Profile {
     @Column(name = "social_x")
     private String socialX;
 
+    @Column(name = "resume_url")
+    private String resumeUrl;
+
+    @Column(name = "resume_name")
+    private String resumeName;
+
+    @Column(name = "resume_at")
+    private LocalDateTime resumeAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -70,6 +79,15 @@ public class Profile {
 
     public String getSocialX() { return socialX; }
     public void setSocialX(String socialX) { this.socialX = socialX; }
+
+    public String getResumeUrl() { return resumeUrl; }
+    public void setResumeUrl(String resumeUrl) { this.resumeUrl = resumeUrl; }
+
+    public String getResumeName() { return resumeName; }
+    public void setResumeName(String resumeName) { this.resumeName = resumeName; }
+
+    public LocalDateTime getResumeAt() { return resumeAt; }
+    public void setResumeAt(LocalDateTime resumeAt) { this.resumeAt = resumeAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
